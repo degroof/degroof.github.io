@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tell Me What To Do</title>
+    <style>
+        :root {
+          --light-blue: #9090FF;
+          --dark-blue: #2647FF;
+          --green: #4CAF50;
+          --red: #920000;
+          --orange: #FFA500;
+          --white: #FFFFFF;
+          --black: #000000;
+        }
+
+        body {
+          margin: 0;
+          font-family: sans-serif;
+          color: var(--black);
+        }
+
+        .screen {
+          display: none;
+          background: var(--light-blue);
+          min-height: 100vh;
+          width: 100vmin;
+          margin: 0 auto;
+          border: 2px solid var(--black);
+          border-radius: 6px;
+          top: 0;
+          left: 0;
+          z-index: 1;
+          padding: 0;
+        }
+        .active {
+          display: block;
+        }
+
+        h1, h2 {
+          margin-top: 0px;
+          padding-top: 2vmin;
+          padding-left: 2vmin;
+          padding-bottom: 1vmin;
+          text-align: left;
+          background: var(--black);
+          color: var(--white);
+        }
+
+        .large-bold-text {
+          text-align: center;
+          font-size: 2em;
+          font-weight: bold;
+          margin: 32px 0;
+          color: var(--black);
+        }
+
+        /* Go button */
+        .go-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 32px auto;
+          width: 50vmin;
+          height: 50vmin;
+          border-radius: 50%;
+          background: var(--red);
+          border: 4px solid var(--black);
+          color: var(--white);
+          font-size: 4vmin;
+          font-weight: bold;
+          cursor: pointer;
+          transition: background 0.2s;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          user-select: none;
+        }
+        .go-btn:active {
+          background: #b30000;
+        }
+        .go-btn.hidden {
+          display: none;
+        }
+
+        /* Action buttons */
+        .action-btn {
+          background: var(--dark-blue);
+          color: var(--white);
+          border: 2px solid var(--black);
+          padding: 12px 12px;
+          border-radius: 8px;
+          margin: 8px 2px 8px 2px;
+          font-weight: bold;
+          cursor: pointer;
+          font-size: 1em;
+          transition: background 0.2s;
+        }
+        .action-btn:active {
+          background: #1a34b8;
+        }
+
+        /* Controls */
+        .control {
+          border: 2px solid var(--black);
+          background: var(--light-blue);
+          color: var(--black);
+          border-radius: 6px;
+          padding: 8px;
+          margin: 8px 0;
+          font-size: 1em;
+        }
+
+        .time-ctl {
+          font-size: 1.3em;
+        }
+
+        input[type="text"], input[type="number"], select {
+          border: 2px solid var(--black);
+          background: var(--white);
+          color: var(--black);
+          border-radius: 6px;
+          padding: 8px;
+          font-size: 1em;
+        }
+        input[type="checkbox"] {
+          accent-color: var(--black);
+          width: 20px;
+          height: 20px;
+          margin-right: 8px;
+        }
+
+        /* Action bar at bottom */
+        .action-bar {
+          display: flex;
+          justify-content: center;
+          position: absolute;
+          margin: 0 auto;
+          bottom: 0vmin;
+          width: 100vmin;
+          gap: 2px;
+        }
+
+        /* Task list styles */
+        .task-list {
+          max-height: 75vh;
+          overflow-y: auto;
+          margin: 32px auto 16px auto;
+          width: 90vmin;
+          display: flex;
+          flex-direction: column;
+          gap: 0vh;
+          border: 2px solid var(--black);
+          border-radius: 12px;
+          padding: 4px;
+        }
+        .task-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border: 2px solid var(--black);
+          border-radius: 12px;
+          padding: 0px;
+          font-size: 1.1em;
+          color: var(--white);
+          background: var(--green);
+          min-width: 0;
+          gap: 16px;
+          position: relative;
+        }
+        .task-item.status-red {
+          background: var(--red);
+        }
+        .task-item.status-orange {
+          background: var(--orange);
+        }
+        .task-item .task-desc {
+          flex: 1;
+          margin-left: 8px;
+          text-align: left;
+          padding-top:16px;
+          padding-bottom:16px;
+          overflow-wrap: anywhere;
+        }
+        .task-item .task-status {
+          font-size: 0.95em;
+          font-weight: bold;
+          padding: 16px 8px 16px 8px;
+          text-align: right;
+          min-width: 60px;
+        }
+        .task-item .list-checkbox {
+          margin:16px 2px 16px 16px;
+        }
+        .uuid-field {
+          display: none;
+        }
+
+        /* Dependency list */
+        .dependency-list {
+          max-height: 40vh;
+          overflow-y: auto;
+          margin: 8px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0vh;
+          border: 2px solid var(--black);
+          border-radius: 12px;
+          padding: 4px;
+        }
+        .dependency-item {
+          display: flex;
+          align-items: center;
+          border: 2px solid var(--black);
+          border-radius: 10px;
+          background: var(--dark-blue);
+          color: var(--white);
+          padding: 10px;
+          font-size: 1em;
+          gap: 10px;
+        }
+
+        /* Bottom bar for add/edit */
+        .bottom-bar {
+          display: flex;
+          justify-content: center;
+          gap: 24px;
+          margin-top: 32px;
+          position: absolute;
+          bottom: 0vmin;
+          width: 100vmin;
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0;
+          width: 100vw; height: 100vh;
+          background: rgba(0,0,0,0.35);
+          z-index: 1000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal {
+          background: var(--light-blue);
+          color: var(--black);
+          border: 2px solid var(--black);
+          border-radius: 16px;
+          min-width: 20vmin;
+          max-width: 90vmin;
+          padding: 32px 24px 24px 24px;
+          box-sizing: border-box;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+          z-index: 1001;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .modal-title {
+          font-size: 1.3em;
+          font-weight: bold;
+          margin-bottom: 16px;
+        }
+        .modal-body {
+          margin-bottom: 24px;
+          text-align: left;
+          font-size: 1.1em;
+          white-space: pre-line
+        }
+        .modal-btn {
+          padding: 10px 28px;
+          border: 2px solid var(--black);
+          border-radius: 8px;
+          background: var(--dark-blue);
+          color: var(--white);
+          font-weight: bold;
+          cursor: pointer;
+          margin: 0 8px;
+          font-size: 1em;
+        }
+
+        #task-desc {
+            width: 100%;
+            min-height: 60px;
+            font-size: 1.2em;
+            border-radius: 6px;
+            border: 2px solid var(--black);
+            padding: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+<!-- Main Screen -->
+<div id="main-screen" class="screen active">
+    <h1>Tell Me What To Do</h1>
+    <div class="large-bold-text" id="main-task-text">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Vivamus mollis pharetra tellus vitae rutrum. Curabitur
+        consectetur sollicitudin turpis. Fusce id dui leo. Quisque
+        sed lacinia felis, vel aliquam quam. Sed eu porta felis.
+        Fusce aliquam felis lorem, hendrerit luctus nisl luctus vel.
+        Curabitur libero tortor, tristique sed imperdiet vel, pulvinar.
+    </div>
+    <div class="go-btn" id="go-btn">OK, I'M READY</div>
+    <div class="action-bar">
+        <button class="action-btn" onclick="addTask()">ADD TASK</button>
+        <button class="action-btn" onclick="viewTasks()">VIEW TASKS</button>
+        <button class="action-btn" onclick="showScreen('settings-screen')">SETTINGS</button>
+    </div>
+</div>
+
+<!-- View Tasks Screen -->
+<div id="view-tasks-screen" class="screen">
+    <h2>View Tasks</h2>
+    <div class="task-list" id="task-list">
+    </div>
+    <div class="action-bar">
+        <button class="action-btn" onclick="requeueTasks()">REQUEUE</button>
+        <button class="action-btn" onclick="deleteTasksCheck()">DELETE</button>
+        <button class="action-btn" onclick="addTask()">ADD</button>
+        <button class="action-btn" onclick="showScreen('main-screen')">HOME</button>
+    </div>
+</div>
+
+<!-- Add/Edit Task Screen -->
+<div id="add-edit-screen" class="screen">
+    <h2 id="add-edit-heading">Add Task</h2>
+    <form id="task-form" autocomplete="off">
+        <label for="task-desc">Description</label><br>
+        <textarea id="task-desc" name="task-desc" rows="3" maxlength="256" style="width:100%;"></textarea><br>
+
+        <label for="task-priority">Priority</label><br>
+        <select id="task-priority" name="task-priority">
+            <option value="1">Low</option>
+            <option value="2">Medium</option>
+            <option value="4">High</option>
+            <option value="64">Urgent</option>
+        </select><br>
+
+        <label><input type="checkbox" id="task-repeats"> Repeats</label><br>
+        <div id="repeat-section" style="display:none;">
+            <label>Every</label>
+            <input type="number" id="repeat-interval" min="1" max="999" style="width:60px;">
+            <select id="repeat-type">
+                <option value="1">Hour(s)</option>
+                <option value="2">Day(s)</option>
+                <option value="3">Week(s)</option>
+                <option value="4">Month(s)</option>
+                <option value="5">Year(s)</option>
+            </select><br>
+
+            <div id="repeat-weekday-section" style="display:none;">
+                <label>On</label>
+                <select id="repeat-weekday">
+                    <option value="0">Any Day</option>
+                    <option value="1">Sunday</option>
+                    <option value="2">Monday</option>
+                    <option value="3">Tuesday</option>
+                    <option value="4">Wednesday</option>
+                    <option value="5">Thursday</option>
+                    <option value="6">Friday</option>
+                    <option value="7">Saturday</option>
+                </select>
+            </div>
+
+            <div id="repeat-month-section" style="display:none;">
+                <label>In</label>
+                <select id="repeat-month">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+
+            <div id="repeat-day-section" style="display:none;">
+                <label>On</label>
+                <select id="repeat-day">
+                    <option>Any Day</option>
+                    <option>Last Day</option>
+                    <option>1st</option>
+                    <option>2nd</option>
+                    <option>3rd</option>
+                    <option>4th</option>
+                    <option>5th</option>
+                    <option>6th</option>
+                    <option>7th</option>
+                    <option>8th</option>
+                    <option>9th</option>
+                    <option>10th</option>
+                    <option>11th</option>
+                    <option>12th</option>
+                    <option>13th</option>
+                    <option>14th</option>
+                    <option>15th</option>
+                    <option>16th</option>
+                    <option>17th</option>
+                    <option>18th</option>
+                    <option>19th</option>
+                    <option>20th</option>
+                    <option>21st</option>
+                    <option>22nd</option>
+                    <option>23rd</option>
+                    <option>24th</option>
+                    <option>25th</option>
+                    <option>26th</option>
+                    <option>27th</option>
+                    <option>28th</option>
+                    <option>29th</option>
+                    <option>30th</option>
+                    <option>31st</option>
+                </select>
+            </div>
+
+            <div id="repeat-time-section" style="display:none;">
+                <label>At</label>
+                <input type="time" id="repeat-time" class="time-ctl">
+                <button type="button" class="action-btn"
+                        onclick="clearRepeatTime()">Clear Time
+                </button>
+            </div>
+
+            <div id="repeat-between-section" style="display:none;">
+                <label>Between</label>
+                <input type="time" id="repeat-start-time" class="time-ctl">
+                <label>and</label>
+                <input type="time" id="repeat-end-time" class="time-ctl">
+                <button type="button" class="action-btn"
+                        onclick="clearRepeatTimes()">Clear Times
+                </button>
+            </div>
+        </div>
+
+        <div style="margin-top:24px;font-weight:bold;">Only after these tasks are done</div>
+        <div class="dependency-list" id="dependency-list">
+         </div>
+        <div class="bottom-bar">
+            <button type="button" class="action-btn" id="save-task-btn" onclick="saveTask()">SAVE</button>
+            <button type="button" class="action-btn" onclick="addEditCancel()">CANCEL</button>
+        </div>
+    </form>
+</div>
+
+<!-- Settings Screen -->
+<div id="settings-screen" class="screen">
+    <h2>Settings</h2>
+    <div style="width:100%;display:flex;flex-direction:row;align-items:center;gap:16px;margin-top:32px;">
+        <button class="action-btn" onclick="backupTasks()">BACKUP</button>
+        <button class="action-btn" onclick="restoreTasks()">RESTORE</button>
+        <button class="action-btn" onclick="showScreen('main-screen')">HOME</button>
+    </div>
+</div>
+
+<!-- Modal dialog -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal" id="modal">
+        <div class="modal-title" id="modal-title">Dialog Title</div>
+        <div class="modal-body" id="modal-body">Dialog body text goes here.</div>
+        <div id="modal-actions">
+        </div>
+    </div>
+</div>
+
+<input type="file" id="file-input" accept=".json" style="display:none;"/>
+
+<script type="text/javascript" src="tmwtd.js"></script>
+</body>
+</html>
