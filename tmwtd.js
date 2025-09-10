@@ -734,7 +734,18 @@ console.log("check...");
     {
         var storage = localStorage.getItem("TMWTD_tasks");
         var t = JSON.parse(storage);
-        if (t != null) tasks = t;
+        if (t != null)
+        {
+            tasks = t;
+        }
+        else
+        {
+            tasks = new Tasks();
+            let task=new Task();
+            task.priority=PRIORITY_LOW;
+            task.description="Add some tasks for yourself.\nGo to the Add Task screen and add a task (e.g. 'Do dishes', 'Hydrate').";
+            tasks.tasks[task.id]=task;
+        }
     }
 
     //get all UUIDs of selected tasks in view tasks list
