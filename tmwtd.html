@@ -24,6 +24,7 @@
         .screen {
           display: none;
           background: var(--light-blue);
+          height: 100dvh;
           height: 100vh;
           width: 100vmin;
           margin: 0 auto;
@@ -39,6 +40,7 @@
         }
 
         .task-form {
+          height: 86dvh;
           height: 86vh;
           width: 100vmin;
           display: flex;
@@ -46,6 +48,7 @@
         }
 
         .p-task-list {
+          height: 86dvh;
           height: 86vh;
           width: 100vmin;
           display: flex;
@@ -53,23 +56,29 @@
         }
 
         label {
+          font-size: 1.5dvh;
           font-size: 1.5vh;
         }
 
         h1, h2 {
           margin-top: 0;
+          padding-top: .5dvh;
           padding-top: .5vh;
           padding-left: 2vmin;
+          padding-bottom: .5dvh;
           padding-bottom: .5vh;
           text-align: left;
           background: var(--black);
           color: var(--white);
+          height: 4dvh;
           height: 4vh;
+          font-size: 3dvh;
           font-size: 3vh;
         }
 
         .large-bold-text {
           text-align: center;
+          font-size: 3.5dvh;
           font-size: 3.5vh;
           font-weight: bold;
           margin: 5vmin 0;
@@ -112,8 +121,11 @@
           margin: 1vh .3vw;
           font-weight: bold;
           cursor: pointer;
+          font-size: 2dvh;
           font-size: 2vh;
+          line-height: 1dvh;
           line-height: 1vh;
+          height: 5dvh;
           height: 5vh;
           transition: background 0.2s;
         }
@@ -129,10 +141,12 @@
           border-radius: 1vmin;
           padding: 1.5vmin;
           margin: 1.5vmin 0;
+          font-size: 1.5dvh;
           font-size: 1.5vh;
         }
 
         .time-ctl {
+          font-size: 1.5dvh;
           font-size: 1.5vh;
         }
 
@@ -142,12 +156,15 @@
           color: var(--black);
           border-radius: .8vmin;
           padding: 1vmin;
+          font-size: 1.5dvh;
           font-size: 1.5vh;
         }
 
         input[type="checkbox"] {
           accent-color: var(--black);
+          width: 2dvh;
           width: 2vh;
+          height: 2dvh;
           height: 2vh;
           margin-right: .8vw
         }
@@ -155,11 +172,13 @@
           background: var(--dark-blue);
           color: var(--white);
           border: .3vmin solid var(--black);
+          padding: .8dvh;
           padding: .8vh;
           border-radius: 1vmin;
           margin: 0 .3vw;
           font-weight: bold;
           cursor: pointer;
+          font-size: 1.5dvh;
           font-size: 1.5vh;
           transition: background 0.2s;
         }
@@ -173,7 +192,9 @@
           justify-content: center;
           position: absolute;
           margin: 0 auto;
+          top: 93dvh;
           top: 93vh;
+          height: 7dvh;
           height: 7vh;
           width: 100vmin;
           gap: .2vmin;
@@ -187,6 +208,7 @@
           width: 90vmin;
           display: flex;
           flex-direction: column;
+          gap: 0dvh;
           gap: 0vh;
           border: .2vmin solid var(--black);
           border-radius: 1.2vmin;
@@ -199,6 +221,7 @@
           border: .2vmin solid var(--black);
           border-radius: 1.2vmin;
           padding: 0;
+          font-size: 2dvh;
           font-size: 2vh;
           color: var(--white);
           background: var(--green);
@@ -239,6 +262,7 @@
           position.absolute;
           overflow-y: auto;
           margin: .8vmin 0;
+          gap: 0dvh;
           gap: 0vh;
           border: .2vmin solid var(--black);
           border-radius: 1.2vmin;
@@ -252,6 +276,7 @@
           background: var(--dark-blue);
           color: var(--white);
           padding: 1.0vmin;
+          font-size: 2dvh;
           font-size: 2vh;
           gap: 1.0vmin;
         }
@@ -262,7 +287,9 @@
           justify-content: center;
           position: absolute;
           margin: 0 auto;
+          top: 93dvh;
           top: 93vh;
+          height: 7dvh;
           height: 7vh;
           width: 100vmin;
           gap: .2vmin;
@@ -272,6 +299,7 @@
         .modal-overlay {
           position: fixed;
           top: 0; left: 0;
+          width: 100vw; height: 100dvh;
           width: 100vw; height: 100vh;
           background: rgba(0,0,0,0.35);
           z-index: 1000;
@@ -296,6 +324,7 @@
           align-items: center;
         }
         .modal-title {
+          font-size: 3dvh;
           font-size: 3vh;
           font-weight: bold;
           margin-bottom: 1.6vmin;
@@ -303,6 +332,7 @@
         .modal-body {
           margin-bottom: 2.4vmin;
           text-align: left;
+          font-size: 2dvh;
           font-size: 2vh;
           white-space: pre-line
         }
@@ -315,12 +345,14 @@
           font-weight: bold;
           cursor: pointer;
           margin: 0 .8vmin;
+          font-size: 1.5dvh;
           font-size: 1.5vh;
         }
 
         #task-desc {
             width: 100%;
             min-height: 8vmin;
+            font-size: 1.5dvh;
             font-size: 1.5vh;
             border-radius: .8vmin;
             border: .3vmin solid var(--black);
