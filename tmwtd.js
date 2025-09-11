@@ -1141,9 +1141,8 @@
     var tasks = new Tasks();
     load();
     updateMainScreenState();
-    window.addEventListener("load",function()
-    {
+    window.addEventListener("load",function() {
         setTimeout(function(){
-            document.getElementById("vt").focus();
-        }, 1);
+            window.scrollTo(0, 10000);
+        }, 0);
     });
