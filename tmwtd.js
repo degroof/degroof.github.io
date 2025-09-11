@@ -1143,6 +1143,6 @@
     updateMainScreenState();
     window.addEventListener("load",function() {
         setTimeout(function(){
-            window.scrollTo(0, 10000);
-        }, 0);
+            window.scrollTo(0, document.body.scrollHeight);
+        }, 1000);
     });
