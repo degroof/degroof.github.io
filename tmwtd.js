@@ -1141,8 +1141,3 @@
     var tasks = new Tasks();
     load();
     updateMainScreenState();
-    window.addEventListener("load",function() {
-        setTimeout(function(){
-            window.scrollTo(0, document.body.scrollHeight);
-        }, 1000);
-    });
