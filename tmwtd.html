@@ -24,11 +24,11 @@
         .screen {
           display: none;
           background: var(--light-blue);
-          min-height: 100vh;
+          height: 100vh;
           width: 100vmin;
           margin: 0 auto;
-          border: 2px solid var(--black);
-          border-radius: 6px;
+          border: .2vmin solid var(--black);
+          border-radius: 1vmin;
           top: 0;
           left: 0;
           z-index: 1;
@@ -38,21 +38,41 @@
           display: block;
         }
 
+        .task-form {
+          height: 86vh;
+          width: 100vmin;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .p-task-list {
+          height: 86vh;
+          width: 100vmin;
+          display: flex;
+          flex-direction: column;
+        }
+
+        label {
+          font-size: 1.5vh;
+        }
+
         h1, h2 {
-          margin-top: 0px;
-          padding-top: 2vmin;
+          margin-top: 0;
+          padding-top: .5vh;
           padding-left: 2vmin;
-          padding-bottom: 1vmin;
+          padding-bottom: .5vh;
           text-align: left;
           background: var(--black);
           color: var(--white);
+          height: 4vh;
+          font-size: 3vh;
         }
 
         .large-bold-text {
           text-align: center;
-          font-size: 2em;
+          font-size: 3.5vh;
           font-weight: bold;
-          margin: 32px 0;
+          margin: 5vmin 0;
           color: var(--black);
         }
 
@@ -61,12 +81,12 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 32px auto;
+          margin: 0 auto 4vmin auto;
           width: 50vmin;
           height: 50vmin;
           border-radius: 50%;
           background: var(--red);
-          border: 4px solid var(--black);
+          border: .8vmin solid var(--black);
           color: var(--white);
           font-size: 4vmin;
           font-weight: bold;
@@ -86,13 +106,15 @@
         .action-btn {
           background: var(--dark-blue);
           color: var(--white);
-          border: 2px solid var(--black);
-          padding: 12px 12px;
-          border-radius: 8px;
-          margin: 8px 2px 8px 2px;
+          border: .3vmin solid var(--black);
+          padding: 1.5vmin 3vmin;
+          border-radius: 1vmin;
+          margin: 1vh .3vw;
           font-weight: bold;
           cursor: pointer;
-          font-size: 1em;
+          font-size: 2vh;
+          line-height: 1vh;
+          height: 5vh;
           transition: background 0.2s;
         }
         .action-btn:active {
@@ -101,32 +123,48 @@
 
         /* Controls */
         .control {
-          border: 2px solid var(--black);
+          border: .3vmin solid var(--black);
           background: var(--light-blue);
           color: var(--black);
-          border-radius: 6px;
-          padding: 8px;
-          margin: 8px 0;
-          font-size: 1em;
+          border-radius: 1vmin;
+          padding: 1.5vmin;
+          margin: 1.5vmin 0;
+          font-size: 1.5vh;
         }
 
         .time-ctl {
-          font-size: 1.3em;
+          font-size: 1.5vh;
         }
 
-        input[type="text"], input[type="number"], select {
-          border: 2px solid var(--black);
+        input[type="text"], input[type="number"], select, input[type="time"]{
+          border: .3vmin solid var(--black);
           background: var(--white);
           color: var(--black);
-          border-radius: 6px;
-          padding: 8px;
-          font-size: 1em;
+          border-radius: .8vmin;
+          padding: 1vmin;
+          font-size: 1.5vh;
         }
+
         input[type="checkbox"] {
           accent-color: var(--black);
-          width: 20px;
-          height: 20px;
-          margin-right: 8px;
+          width: 2vh;
+          height: 2vh;
+          margin-right: .8vw
+        }
+        .control-btn {
+          background: var(--dark-blue);
+          color: var(--white);
+          border: .3vmin solid var(--black);
+          padding: .8vh;
+          border-radius: 1vmin;
+          margin: 0 .3vw;
+          font-weight: bold;
+          cursor: pointer;
+          font-size: 1.5vh;
+          transition: background 0.2s;
+        }
+        .control-btn:active {
+          background: #1a34b8;
         }
 
         /* Action bar at bottom */
@@ -135,36 +173,37 @@
           justify-content: center;
           position: absolute;
           margin: 0 auto;
-          bottom: 0vmin;
+          top: 93vh;
+          height: 7vh;
           width: 100vmin;
-          gap: 2px;
+          gap: .2vmin;
         }
 
         /* Task list styles */
         .task-list {
-          max-height: 75vh;
+          position.absolute;
           overflow-y: auto;
-          margin: 32px auto 16px auto;
+          margin: 3vmin auto 1.6vmin auto;
           width: 90vmin;
           display: flex;
           flex-direction: column;
           gap: 0vh;
-          border: 2px solid var(--black);
-          border-radius: 12px;
-          padding: 4px;
+          border: .2vmin solid var(--black);
+          border-radius: 1.2vmin;
+          padding: .4vmin;
         }
         .task-item {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border: 2px solid var(--black);
-          border-radius: 12px;
-          padding: 0px;
-          font-size: 1.1em;
+          border: .2vmin solid var(--black);
+          border-radius: 1.2vmin;
+          padding: 0;
+          font-size: 2vh;
           color: var(--white);
           background: var(--green);
           min-width: 0;
-          gap: 16px;
+          gap: 1.6vmin;
           position: relative;
         }
         .task-item.status-red {
@@ -175,21 +214,21 @@
         }
         .task-item .task-desc {
           flex: 1;
-          margin-left: 8px;
+          margin-left: .8vmin;
           text-align: left;
-          padding-top:16px;
-          padding-bottom:16px;
+          padding-top:1.6vmin;
+          padding-bottom:1.6vmin;
           overflow-wrap: anywhere;
+          cursor: pointer;
         }
         .task-item .task-status {
-          font-size: 0.95em;
           font-weight: bold;
-          padding: 16px 8px 16px 8px;
+          padding: 1.6vmin .8vmin 1.6vmin .8vmin;
           text-align: right;
-          min-width: 60px;
+          min-width: 6.0vmin;
         }
         .task-item .list-checkbox {
-          margin:16px 2px 16px 16px;
+          margin:1.6vmin .2vmin 1.6vmin 1.6vmin;
         }
         .uuid-field {
           display: none;
@@ -197,37 +236,36 @@
 
         /* Dependency list */
         .dependency-list {
-          max-height: 40vh;
+          position.absolute;
           overflow-y: auto;
-          margin: 8px 0;
-          display: flex;
-          flex-direction: column;
+          margin: .8vmin 0;
           gap: 0vh;
-          border: 2px solid var(--black);
-          border-radius: 12px;
-          padding: 4px;
+          border: .2vmin solid var(--black);
+          border-radius: 1.2vmin;
+          padding: .4vmin;
         }
         .dependency-item {
           display: flex;
           align-items: center;
-          border: 2px solid var(--black);
-          border-radius: 10px;
+          border: .2vmin solid var(--black);
+          border-radius: 1.0vmin;
           background: var(--dark-blue);
           color: var(--white);
-          padding: 10px;
-          font-size: 1em;
-          gap: 10px;
+          padding: 1.0vmin;
+          font-size: 2vh;
+          gap: 1.0vmin;
         }
 
         /* Bottom bar for add/edit */
         .bottom-bar {
           display: flex;
           justify-content: center;
-          gap: 24px;
-          margin-top: 32px;
           position: absolute;
-          bottom: 0vmin;
+          margin: 0 auto;
+          top: 93vh;
+          height: 7vh;
           width: 100vmin;
+          gap: .2vmin;
         }
 
         /* Modal Dialog */
@@ -245,48 +283,48 @@
         .modal {
           background: var(--light-blue);
           color: var(--black);
-          border: 2px solid var(--black);
-          border-radius: 16px;
+          border: .2vmin solid var(--black);
+          border-radius: 1.6vmin;
           min-width: 20vmin;
           max-width: 90vmin;
-          padding: 32px 24px 24px 24px;
+          padding: 3.2vmin 2.4vmin 2.4vmin 2.4vmin;
           box-sizing: border-box;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+          box-shadow: 0 .8vmin 3.2vmin rgba(0,0,0,0.15);
           z-index: 1001;
           display: flex;
           flex-direction: column;
           align-items: center;
         }
         .modal-title {
-          font-size: 1.3em;
+          font-size: 3vh;
           font-weight: bold;
-          margin-bottom: 16px;
+          margin-bottom: 1.6vmin;
         }
         .modal-body {
-          margin-bottom: 24px;
+          margin-bottom: 2.4vmin;
           text-align: left;
-          font-size: 1.1em;
+          font-size: 2vh;
           white-space: pre-line
         }
         .modal-btn {
-          padding: 10px 28px;
-          border: 2px solid var(--black);
-          border-radius: 8px;
+          padding: 1.0vmin 2.8vmin;
+          border: .2vmin solid var(--black);
+          border-radius: .8vmin;
           background: var(--dark-blue);
           color: var(--white);
           font-weight: bold;
           cursor: pointer;
-          margin: 0 8px;
-          font-size: 1em;
+          margin: 0 .8vmin;
+          font-size: 1.5vh;
         }
 
         #task-desc {
             width: 100%;
-            min-height: 60px;
-            font-size: 1.2em;
-            border-radius: 6px;
-            border: 2px solid var(--black);
-            padding: 8px;
+            min-height: 8vmin;
+            font-size: 1.5vh;
+            border-radius: .8vmin;
+            border: .3vmin solid var(--black);
+            padding: 1vmin;
             box-sizing: border-box;
             resize: vertical;
         }
@@ -315,7 +353,9 @@
 <!-- View Tasks Screen -->
 <div id="view-tasks-screen" class="screen">
     <h2>View Tasks</h2>
-    <div class="task-list" id="task-list">
+    <div class="p-task-list">
+        <div class="task-list" id="task-list">
+        </div>
     </div>
     <div class="action-bar">
         <button class="action-btn" onclick="requeueTasks()">REQUEUE</button>
@@ -328,9 +368,9 @@
 <!-- Add/Edit Task Screen -->
 <div id="add-edit-screen" class="screen">
     <h2 id="add-edit-heading">Add Task</h2>
-    <form id="task-form" autocomplete="off">
+    <form id="task-form" autocomplete="off" class="task-form">
         <label for="task-desc">Description</label><br>
-        <textarea id="task-desc" name="task-desc" rows="3" maxlength="256" style="width:100%;"></textarea><br>
+        <textarea id="task-desc" name="task-desc" class="text-area" rows="3" maxlength="256" style="width:100%;"></textarea><br>
 
         <label for="task-priority">Priority</label><br>
         <select id="task-priority" name="task-priority">
@@ -340,10 +380,10 @@
             <option value="64">Urgent</option>
         </select><br>
 
-        <label><input type="checkbox" id="task-repeats"> Repeats</label><br>
+        <label><input type="checkbox" id="task-repeats"> This task repeats</label><br>
         <div id="repeat-section" style="display:none;">
             <label>Every</label>
-            <input type="number" id="repeat-interval" min="1" max="999" style="width:60px;">
+            <input type="number" id="repeat-interval" min="1" max="999" style="width:6.0vmin;">
             <select id="repeat-type">
                 <option value="1">Hour(s)</option>
                 <option value="2">Day(s)</option>
@@ -426,7 +466,7 @@
             <div id="repeat-time-section" style="display:none;">
                 <label>At</label>
                 <input type="time" id="repeat-time" class="time-ctl">
-                <button type="button" class="action-btn"
+                <button type="button" class="control-btn"
                         onclick="clearRepeatTime()">Clear Time
                 </button>
             </div>
@@ -436,13 +476,13 @@
                 <input type="time" id="repeat-start-time" class="time-ctl">
                 <label>and</label>
                 <input type="time" id="repeat-end-time" class="time-ctl">
-                <button type="button" class="action-btn"
+                <button type="button" class="control-btn"
                         onclick="clearRepeatTimes()">Clear Times
                 </button>
             </div>
         </div>
 
-        <div style="margin-top:24px;font-weight:bold;">Only after these tasks are done<br><small>Select any tasks this task is dependent on.</small></div>
+        <div style="margin-top:2.4vmin;font-weight:bold;" id="dep-lbl">Only after these tasks are done<br><small>Select any tasks this task is dependent on.</small></div>
         <div class="dependency-list" id="dependency-list">
          </div>
         <div class="bottom-bar">
@@ -455,7 +495,7 @@
 <!-- Settings Screen -->
 <div id="settings-screen" class="screen">
     <h2>Settings</h2>
-    <div style="width:100vmin;display:flex;flex-direction:row;align-items:center;gap:16px;margin-top:32px;justify-content: center;">
+    <div style="width:100vmin;display:flex;flex-direction:row;align-items:center;gap:1.6vmin;margin-top:3.2vmin;justify-content: center;">
         <button class="action-btn" onclick="backupTasks()">BACKUP</button>
         <button class="action-btn" onclick="restoreTasks()">RESTORE</button>
         <button class="action-btn" onclick="showScreen('main-screen')">HOME</button>

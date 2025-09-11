@@ -152,14 +152,25 @@
             endTimeFld.value=minutesToTime(task.maxMinute);
         }
         //load dependency list
-        document.getElementById('dependency-list').innerHTML = '';
+        let depList=document.getElementById('dependency-list');
+        depList.innerHTML = '';
         let deps=getPossibleDependencyTasks();
-        deps.forEach(task =>
+        if(deps.length>0)
         {
-            let checked=taskToAddEdit.dependencies.includes(task.id);
-            addDependencyToList(task,checked);
+            depList.style.display="block";
+            document.getElementById('dep-lbl').style.display="block";
+            deps.forEach(task =>
+            {
+                let checked=taskToAddEdit.dependencies.includes(task.id);
+                addDependencyToList(task,checked);
+            }
+            );
         }
-        );
+        else
+        {
+            depList.style.display="none";
+            document.getElementById('dep-lbl').style.display="none";
+        }
     }
 
     //set task attributes from add/edit screen
@@ -407,10 +418,10 @@
         let state = GO_NONE;
         let task = null;
 
-        if (taskId == null) //no current task
+        if (taskId == null || getTaskById(taskId)==null) //no current task
         {
             let available = getAvailableTasks().length > 0;
-            if (available) state = "avail"; //tasks are available
+            if (available) state = GO_AVAIL; //tasks are available
         }
         else //currently executing task
         {
@@ -439,7 +450,6 @@
                 goBtn.onclick = function() { startTask(); };
                 waitingForTasks=false;
         }
-console.log("check...");
         if(waitingForTasks && onMainScreen)
         {
             setTimeout(function() { updateMainScreenState(); }, 1000*60);
@@ -597,6 +607,11 @@ console.log("check...");
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        showModal("Backup", "Tasks backed up to "+filename,
+        [
+        {
+            text: "OK"
+        }]);
     }
 
     // Restore tasks
