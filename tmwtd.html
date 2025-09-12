@@ -220,7 +220,9 @@
           text-align: left;
           padding-top:1.6vmin;
           padding-bottom:1.6vmin;
-          overflow-wrap: anywhere;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
           cursor: pointer;
         }
         .task-item .task-status {
@@ -256,6 +258,17 @@
           padding: 1.0vmin;
           font-size: 2vh;
           gap: 1.0vmin;
+        }
+        .dependency-item .task-desc {
+          flex: 1;
+          margin-left: .8vmin;
+          text-align: left;
+          padding-top:.6vmin;
+          padding-bottom:.6vmin;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          cursor: pointer;
         }
 
         /* Bottom bar for add/edit */
@@ -328,7 +341,9 @@
             border: .3vmin solid var(--black);
             padding: 1vmin;
             box-sizing: border-box;
-            resize: vertical;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
     </style>
 </head>

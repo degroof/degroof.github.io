@@ -484,6 +484,7 @@
             }
         }
         tasks.currentTaskId=null;
+        save();
         updateMainScreenState();
     }
 
@@ -656,7 +657,7 @@
         // Description
         const desc = document.createElement('span');
         desc.className = 'task-desc';
-        desc.textContent = task.description.substring(0,50);
+        desc.textContent = task.description;
         // Hidden UUID
         const hidden = document.createElement('span');
         hidden.className = 'uuid-field';
@@ -688,7 +689,7 @@
         // Description
         const desc = document.createElement('span');
         desc.className = 'task-desc';
-        desc.textContent = task.description.substring(0,50);
+        desc.textContent = task.description;
         // Status
         const status = document.createElement('span');
         status.className = 'task-status';
@@ -755,11 +756,32 @@
         }
         else
         {
-            tasks = new Tasks();
-            let task=new Task();
-            task.priority=PRIORITY_LOW;
-            task.description="Add some tasks for yourself.\nGo to the Add Task screen and add a task (e.g. 'Do dishes', 'Hydrate').";
-            tasks.tasks[task.id]=task;
+            var storage = localStorage.getItem("randomTodoList");
+            var t = JSON.parse(storage);
+            if (t != null)
+            {
+                let items = t.items;
+                for(let i=0;i<items.length;i++)
+                {
+                    console.log(items[i]);
+                    let task = new Task();
+                    task.done = items[i].done;
+                    task.description=items[i].label;
+                    let w=items[i].weight;
+                    task.weight=w<4?PRIORITY_LOW:(w<20?PRIORITY_MEDIUM:(w<40?PRIORITY_HIGH:PRIORITY_URGENT));
+                    tasks.tasks[task.id]=task;
+                    save();
+                }
+            }
+            else
+            {
+                tasks = new Tasks();
+                let task=new Task();
+                task.priority=PRIORITY_LOW;
+                task.description="Add some tasks for yourself.\nGo to the Add Task screen and add a task (e.g. 'Do dishes', 'Hydrate').";
+                tasks.tasks[task.id]=task;
+                save();
+            }
         }
     }
 
@@ -1128,11 +1150,13 @@
                 if (currentWeight >= randomWeight)
                 {
                    tasks.currentTaskId = task.id;
+                   save();
                    return task;
                 }
             }
         }
         tasks.currentTaskId = null;
+        save();
         return null; //no tasks available
     }
 
