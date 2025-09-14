@@ -24,20 +24,23 @@
           font-family: sans-serif;
           color: var(--black);
           height: 100%;
+          position: relative;
         }
 
         .screen {
           display: none;
           background: var(--light-blue);
-          height: 100%;
           width: 100vmin;
           margin: 0 auto;
           border: .2vmin solid var(--black);
           border-radius: 1vmin;
           top: 0;
+          bottom: 0;
           left: 0;
+          height: 100%;
           z-index: 1;
           padding: 0;
+          position: relative;
         }
         .active {
           display: block;
@@ -178,7 +181,7 @@
           justify-content: center;
           position: absolute;
           margin: 0 auto;
-          top: 93%;
+          bottom: 0px;
           height: 7%;
           width: 100vmin;
           gap: .2vmin;
@@ -280,7 +283,7 @@
           justify-content: center;
           position: absolute;
           margin: 0 auto;
-          top: 93%;
+          bottom: 0%;
           height: 7%;
           width: 100vmin;
           gap: .2vmin;
