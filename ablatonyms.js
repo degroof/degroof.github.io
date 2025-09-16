@@ -7,6 +7,10 @@ function getGameNumber()
     const now = new Date().getTime();
     const diffMs = now - specificDate;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+console.log(diffDays);
+console.log(Math.round(diffMs / (1000 * 60 * 60 * 24)));
+console.log(Math.floor(diffMs % (1000 * 60 * 60 * 24))/1000/60/60);
+
     return diffDays;
 }
 
