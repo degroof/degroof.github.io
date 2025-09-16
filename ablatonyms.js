@@ -3,7 +3,7 @@ let chainsInt=[[8444,8218,8509,8103,8067,7748,0],[121016,120634,129332,129320,12
 
 function getGameNumber()
 {
-    const specificDate = new Date("2025-09-15").getTime();
+    const specificDate = new Date("2025-09-14 00:00").getTime();
     const now = new Date().getTime();
     const diffMs = now - specificDate;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
