@@ -261,7 +261,7 @@ function endGame(completed) {
 }
 
 function share() {
-    let result = "#Ablatonyms\n";
+    let result = "#Ablatonyms "+game.gameNumber+"\n";
     result += "Score: "+getScore()+"\n";
     result += "Wrong Guesses: "+game.wrongGuesses+"\n";
     elapsed= Math.floor((game.endTime-game.startTime)/1000);
