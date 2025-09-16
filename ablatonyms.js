@@ -13,7 +13,6 @@ function getElapsedTime()
     let st=(game.startTime)?game.startTime:new Date().getTime();
     let et=(game.endTime)?game.endTime:new Date().getTime();
     let elapsed= Math.floor((et-st)/1000);
-console.log(elapsed)
     if(elapsed<0||elapsed>24*60*60) elapsed=0;
     let hr = Math.floor(elapsed/3600);
     if (hr < 10) {
