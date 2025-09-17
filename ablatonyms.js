@@ -1,4 +1,5 @@
 let clockRunning=false;
+let currentGameNumber = getGameNumber();
 
 //start the onscreen clock
 function startClock()
@@ -16,11 +17,20 @@ function stopClock()
 //get the current game number based on the day
 function getGameNumber()
 {
-    const specificDate = new Date("2025-09-14 00:00").getTime();
-    const now = new Date().getTime();
-    const diffMs = now - specificDate;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays;
+    let url = new URL(window.location);
+    let r = url.searchParams.get("random");
+    if(r==1)
+    {
+        return Math.floor(Math.random()*chainsInt.length);
+    }
+    else
+    {
+        const specificDate = new Date("2025-09-14 00:00").getTime();
+        const now = new Date().getTime();
+        const diffMs = now - specificDate;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
 }
 
 //get the elapsed time in hh:mm:ss format
@@ -51,7 +61,7 @@ function getElapsedTime()
 //get the number of letters in the goal word
 function getGoalCount()
 {
-    let gn=getGameNumber();
+    let gn=currentGameNumber;
     let chain=[];
     let chainInt=chainsInt[gn];
     for(let i=0;i<chainInt.length;i++)chain.push(words[chainInt[i]]);
@@ -67,7 +77,7 @@ function getGoal()
 //get the word chain for this game
 function getChain()
 {
-    let gn=getGameNumber();
+    let gn=currentGameNumber;
     let chain=[];
     let chainInt=chainsInt[gn];
     for(let i=0;i<chainInt.length;i++)chain.push(words[chainInt[i]]);
@@ -77,7 +87,7 @@ function getChain()
 //get the start word
 function getWord()
 {
-    let gn=getGameNumber();
+    let gn=currentGameNumber;
     let chain=[];
     let chainInt=chainsInt[gn];
     return words[chainsInt[gn][0]];
@@ -171,7 +181,7 @@ function startNewGame(word)
         completed: false,
         startTime: 0,
         endTime: 0,
-        gameNumber: getGameNumber(),
+        gameNumber: currentGameNumber,
         wrongGuesses:0,
         moves:0,
         undos:0
@@ -184,7 +194,7 @@ function startNewGame(word)
 function restoreGame(state)
 {
     game = state;
-    if(!game.gameNumber || game.gameNumber!=getGameNumber())
+    if(!game.gameNumber || game.gameNumber!=currentGameNumber)
     {
         const word = getWord();
         startNewGame(word);
