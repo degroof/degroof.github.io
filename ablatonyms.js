@@ -275,7 +275,6 @@ function checkWord(rowIdx, colIdx)
     const letterCount=newLetters.length;
     if (isValidWord(newWord)) //valid
     {
-console.log(game.rows[rowIdx]);
         row.status = "green";
         row.removed = colIdx;
         row.red = [];
