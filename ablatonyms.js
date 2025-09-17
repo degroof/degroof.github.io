@@ -84,18 +84,21 @@ function getWord()
 }
 
 //check if the word is in the dictionary
-function isValidWord(word) {
+function isValidWord(word)
+{
     return words.includes(word.toUpperCase());
 }
 
 const STORAGE_KEY = "ablatonyms_save";
 //save the game info to local browser storage
-function saveGame(state) {
+function saveGame(state)
+{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 //load the game info from local browser storage
-function loadGame() {
+function loadGame()
+{
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) return JSON.parse(data);
     return null;
@@ -131,7 +134,8 @@ You can always back up by tapping UNDO. For any given start word, there may be s
  a lot more wrong ones. Today's goal is `;
 
 //put the title in fake buttons
-function setupTitle() {
+function setupTitle()
+{
     titleRow.innerHTML = "";
     "ABLATONYMS".split("").forEach(l =>
     {
@@ -144,12 +148,14 @@ function setupTitle() {
 }
 
 //display the instructions
-function setupInstructions() {
+function setupInstructions()
+{
     instructions.innerHTML = INSTRUCTIONS_TEXT+getGoal();
 }
 
 //start a new game
-function startNewGame(word) {
+function startNewGame(word)
+{
     game =
     {
         word:word,
@@ -175,7 +181,8 @@ function startNewGame(word) {
 }
 
 //restore the game info from local storage
-function restoreGame(state) {
+function restoreGame(state)
+{
     game = state;
     if(!game.gameNumber || game.gameNumber!=getGameNumber())
     {
@@ -193,7 +200,8 @@ function restoreGame(state) {
 }
 
 //fill the screen
-function render() {
+function render()
+{
     rowsContainer.innerHTML = "";
     //set up the letter rows
     game.rows.forEach((row, rowIdx) =>
@@ -256,7 +264,8 @@ function render() {
 }
 
 //check that the word is valid
-function checkWord(rowIdx, colIdx) {
+function checkWord(rowIdx, colIdx)
+{
     if (game.over) return;
     const row = game.rows[rowIdx];
     if (row.status !== "active") return;
@@ -266,6 +275,7 @@ function checkWord(rowIdx, colIdx) {
     const letterCount=newLetters.length;
     if (isValidWord(newWord)) //valid
     {
+console.log(game.rows[rowIdx]);
         row.status = "green";
         row.removed = colIdx;
         row.red = [];
@@ -279,6 +289,7 @@ function checkWord(rowIdx, colIdx) {
         });
         if (letterCount == getGoalCount())
         {
+            game.rows[rowIdx+1].status = "green";
             endGame(true);
         }
     }
@@ -298,7 +309,8 @@ function checkWord(rowIdx, colIdx) {
 }
 
 //clear last word and move up to the last one
-function undo() {
+function undo()
+{
     if (game.rows.length <= 1 || game.over) return;
     game.rows.pop();
     const prevRow = game.rows[game.rows.length - 1];
@@ -311,7 +323,8 @@ function undo() {
 }
 
 //end game without finishing
-function giveUp() {
+function giveUp()
+{
     endGame(false);
 }
 
@@ -326,7 +339,8 @@ function updateClock()
 }
 
 //end the game
-function endGame(completed) {
+function endGame(completed)
+{
     game.over = true;
     game.completed = completed;
     game.endTime=new Date().getTime();
@@ -349,7 +363,8 @@ function endGame(completed) {
 }
 
 //copy results to clipboard and pop up a confirmation dialog
-function share() {
+function share()
+{
     let result = "#Ablatonyms "+game.gameNumber+"\n";
     if(!game.completed) result+="Resigned\n";
     result += (game.moves?("Moves: "+game.moves+"\n"):"")+
@@ -364,7 +379,8 @@ function share() {
 }
 
 //pop up a dialog
-function showModal(message, buttons) {
+function showModal(message, buttons)
+{
     modal.innerHTML = "";
     modal.classList.remove("hidden");
     const content = document.createElement("div");
@@ -387,7 +403,8 @@ function showModal(message, buttons) {
 }
 
 //initialize the app
-window.onload = function () {
+window.onload = function ()
+{
     setupTitle();
     setupInstructions();
     const saved = loadGame();
