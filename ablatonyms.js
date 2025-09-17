@@ -19,16 +19,26 @@ function getGameNumber()
 {
     let url = new URL(window.location);
     let r = url.searchParams.get("random");
-    if(r==1)
+    let n = url.searchParams.get("number");
+    let g = url.searchParams.get("game");
+    const specificDate = new Date("2025-09-14 00:00").getTime();
+    const now = new Date().getTime();
+    const diffMs = now - specificDate;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if(g!=null&&!isNaN(g)&&parseInt(g)>=0&&parseInt(g)<=diffDays)
+    {
+        return Math.floor(parseInt(g));
+    }
+    else if(n!=null&&!isNaN(n)&&parseInt(n)>=0&&parseInt(n)<chainsInt.length)
+    {
+        return Math.floor(parseInt(n));
+    }
+    else if(r==1)
     {
         return Math.floor(Math.random()*chainsInt.length);
     }
     else
     {
-        const specificDate = new Date("2025-09-14 00:00").getTime();
-        const now = new Date().getTime();
-        const diffMs = now - specificDate;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         return diffDays;
     }
 }
