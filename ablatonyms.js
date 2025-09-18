@@ -250,8 +250,8 @@ function render()
                     }
                     game.moves=game.moves+1;
                     checkWord(rowIdx, colIdx);
-                    const scrollingElement = (document.scrollingElement || document.body);
-                    scrollingElement.scrollTop = scrollingElement.scrollHeight;                }
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
             };
             div.appendChild(btn);
         });
@@ -284,8 +284,7 @@ function render()
         shareBtn.className = "share-btn";
         shareBtn.onclick = share;
         shareContainer.appendChild(shareBtn);
-        const scrollingElement = (document.scrollingElement || document.body);
-        scrollingElement.scrollTop = scrollingElement.scrollHeight;
+        window.scrollTo(0, document.body.scrollHeight);
 
     }
 }
