@@ -126,6 +126,8 @@ const rowsContainer = document.getElementById("rows-container");
 const actionButtons = document.getElementById("action-buttons");
 const shareContainer = document.getElementById("share-container");
 const modal = document.getElementById("modal");
+let undoBtn;
+let shareBtn;
 
 //default game state
 let game = {
@@ -248,6 +250,11 @@ function render()
                     }
                     game.moves=game.moves+1;
                     checkWord(rowIdx, colIdx);
+                    if(undoBtn!=null)
+                    {
+                        undoBtn.focus();
+                        setTimeout(undoBtn.focus(),5);
+                    }
                 }
             };
             div.appendChild(btn);
@@ -259,7 +266,7 @@ function render()
     actionButtons.innerHTML = "";
     if (!game.over && game.rows.length > 1 && game.rows[game.rows.length - 1].status === "active")
     {
-        const undoBtn = document.createElement("button");
+        undoBtn = document.createElement("button");
         undoBtn.textContent = "UNDO";
         undoBtn.className = "action-btn";
         undoBtn.onclick = undo;
@@ -276,11 +283,17 @@ function render()
     shareContainer.innerHTML = "";
     if (game.over)
     {
-        const shareBtn = document.createElement("button");
+        shareBtn = document.createElement("button");
         shareBtn.textContent = "SHARE";
         shareBtn.className = "share-btn";
         shareBtn.onclick = share;
         shareContainer.appendChild(shareBtn);
+        if(shareBtn!=null)
+        {
+            shareBtn.focus();
+            setTimeout(shareBtn.focus(),5);
+        }
+
     }
 }
 
