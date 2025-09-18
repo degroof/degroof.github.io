@@ -78,12 +78,6 @@ function getGoalCount()
     return chain[chain.length-1].length;
 }
 
-//get the goal text for the game
-function getGoal()
-{
-    return "a "+getGoalCount()+" letter word. Get started by tapping the letters below.";
-}
-
 //get the word chain for this game
 function getChain()
 {
@@ -149,9 +143,16 @@ let game = {
 };
 
 //text at top of screen
-const INSTRUCTIONS_TEXT = `Tap letters, removing one at a time to form new words and reach the goal word length.
-You can always back up by tapping UNDO. For any given start word, there may be several right solutions — and
- a lot more wrong ones. Today's goal is `;
+const INSTRUCTIONS_TEXT = `<h2>Game #${currentGameNumber}</h2>
+<ul>
+<li>Tap on one letter in the word, removing it to form a new word.</li>
+<li>If the letter you tap on results in a valid word, the old word will turn green and you'll be presented with the new word.</li>
+<li>Continue eliminating letters until you reach the goal of a one-letter word.</li>
+<li>If the letter to choose doesn't result in a valid word, that letter will turn red and you'll need to pick a different one.</li>
+<li>Even if you get a valid word, you might end up going down the wrong path, but you can always back up by tapping on UNDO.</li>
+<li>For any given start word, there may be several right solutions... and quite a few wrong ones.</li>
+</ul>
+Get started by tapping on one of the letters below.`;
 
 //put the title in fake buttons
 function setupTitle()
@@ -170,7 +171,7 @@ function setupTitle()
 //display the instructions
 function setupInstructions()
 {
-    instructions.innerHTML = INSTRUCTIONS_TEXT+getGoal();
+    instructions.innerHTML = INSTRUCTIONS_TEXT;
 }
 
 //start a new game
