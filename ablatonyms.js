@@ -250,12 +250,8 @@ function render()
                     }
                     game.moves=game.moves+1;
                     checkWord(rowIdx, colIdx);
-                    if(undoBtn!=null)
-                    {
-                        undoBtn.focus();
-                        setTimeout(undoBtn.focus(),5);
-                    }
-                }
+                    const scrollingElement = (document.scrollingElement || document.body);
+                    scrollingElement.scrollTop = scrollingElement.scrollHeight;                }
             };
             div.appendChild(btn);
         });
@@ -288,11 +284,8 @@ function render()
         shareBtn.className = "share-btn";
         shareBtn.onclick = share;
         shareContainer.appendChild(shareBtn);
-        if(shareBtn!=null)
-        {
-            shareBtn.focus();
-            setTimeout(shareBtn.focus(),5);
-        }
+        const scrollingElement = (document.scrollingElement || document.body);
+        scrollingElement.scrollTop = scrollingElement.scrollHeight;
 
     }
 }
