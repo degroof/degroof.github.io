@@ -240,6 +240,7 @@ function startNewGame(word)
 function restoreGame(state)
 {
     game = state;
+    collapsed = game.collapsed;
     if(!game.gameNumber || game.gameNumber!=currentGameNumber)
     {
         const word = getWord();
