@@ -464,10 +464,8 @@ function showModal(message, buttons)
 window.onload = function ()
 {
     setupTitle();
-    setupInstructions();
     setupSubtitle();
     const saved = loadGame();
-    collapsed=getCollapsed();
     if (saved && saved.word)
     {
         restoreGame(saved);
@@ -478,5 +476,7 @@ window.onload = function ()
         const word = getWord();
         startNewGame(word);
     }
+    collapsed=getCollapsed();
+    setupInstructions();
 };
 
