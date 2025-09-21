@@ -1,5 +1,6 @@
 let clockRunning=false;
 let currentGameNumber = getGameNumber();
+let collapsed = false;
 
 //start the onscreen clock
 function startClock()
@@ -12,6 +13,15 @@ function startClock()
 function stopClock()
 {
     clockRunning=false;
+}
+
+//get whether the instructions are hidden
+function getCollapsed()
+{
+    if(game.collapsed!=null && game.collapsed)
+        return true;
+    else
+        return false;
 }
 
 //get the current game number based on the day
@@ -126,6 +136,7 @@ const rowsContainer = document.getElementById("rows-container");
 const actionButtons = document.getElementById("action-buttons");
 const shareContainer = document.getElementById("share-container");
 const modal = document.getElementById("modal");
+
 let undoBtn;
 let shareBtn;
 
@@ -141,11 +152,14 @@ let game = {
     gameNumber:0,
     wrongGuesses:0,
     moves:0,
-    undos:0
+    undos:0,
+    collapsed:false
 };
 
+const SUBTITLE_TEXT = `<h2>Game #${currentGameNumber}</h2>`;
+
 //text at top of screen
-const INSTRUCTIONS_TEXT = `<h2>Game #${currentGameNumber}</h2>
+const INSTRUCTIONS_TEXT = `<b>Instructions</b><span id="collapser" onclick="toggleCollapsed();">&#9650;</span>
 <ul>
 <li>Tap on one letter in the word, removing it to form a new word.</li>
 <li>If the letter you tap on results in a valid word, the old word will turn green and you'll be presented with the new word.</li>
@@ -155,6 +169,8 @@ const INSTRUCTIONS_TEXT = `<h2>Game #${currentGameNumber}</h2>
 <li>For any given start word, there may be several right solutions... and quite a few wrong ones.</li>
 </ul>
 Get started by tapping on one of the letters below.`;
+
+const INSTRUCTIONS_TEXT_C = `<b>Instructions</b><span id="collapser" onclick="toggleCollapsed();">&#9660;</span>`;
 
 //put the title in fake buttons
 function setupTitle()
@@ -173,7 +189,23 @@ function setupTitle()
 //display the instructions
 function setupInstructions()
 {
-    instructions.innerHTML = INSTRUCTIONS_TEXT;
+    instructions.innerHTML = collapsed?INSTRUCTIONS_TEXT_C:INSTRUCTIONS_TEXT;
+    let collapser = document.getElementById("collapser");
+}
+
+function toggleCollapsed()
+{
+    if(collapsed===undefined) collapsed=false;
+    collapsed=!collapsed;
+    game.collapsed=collapsed;
+    saveGame(game);
+    setupInstructions();
+}
+
+//display the game number
+function setupSubtitle()
+{
+    subtitle.innerHTML = SUBTITLE_TEXT;
 }
 
 //start a new game
@@ -197,7 +229,8 @@ function startNewGame(word)
         gameNumber: currentGameNumber,
         wrongGuesses:0,
         moves:0,
-        undos:0
+        undos:0,
+        collapsed: collapsed
     };
     saveGame(game);
     render();
@@ -432,7 +465,9 @@ window.onload = function ()
 {
     setupTitle();
     setupInstructions();
+    setupSubtitle();
     const saved = loadGame();
+    collapsed=getCollapsed();
     if (saved && saved.word)
     {
         restoreGame(saved);

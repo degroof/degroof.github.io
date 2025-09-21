@@ -41,12 +41,11 @@ h2 {
     user-select: none;
 }
 
-#instructions {
+#subtitle {
     width: 98%;
     resize: none;
-    min-height: 60px;
-    margin: 10px 0 18px 0;
-    padding: 10px;
+    margin: 10px 0 0 0;
+    padding: 0;
     border-radius: 9px;
     border: none;
     font-size: 1em;
@@ -54,7 +53,19 @@ h2 {
     font-family: inherit;
     box-sizing: border-box;
 }
-
+#instructions {
+    width: 98%;
+    resize: none;
+    min-height: 30px;
+    margin: 0 0 18px 0;
+    padding: 10px;
+    border-radius: 9px;
+    border: solid 1px gray;
+    font-size: 1em;
+    color: #222;
+    font-family: inherit;
+    box-sizing: border-box;
+}
 #timer {
     width: 100%;
     margin: 0;
@@ -65,6 +76,11 @@ h2 {
     text-align: center;
 }
 
+#collapser {
+    cursor: pointer;
+  display: block;
+  float: right;
+}
 
 .button-row {
     display: flex;
