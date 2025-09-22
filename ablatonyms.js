@@ -24,6 +24,22 @@ function getCollapsed()
         return false;
 }
 
+//get the game score
+function getScore()
+{
+    let wordsCompleted=game.rows.length-1;
+    let characters=getWord().length;
+    let errors=game.wrongGuesses;
+    let undos=game.undos;
+    let score=100*wordsCompleted/(characters-1+errors+undos);
+    let st=(game.startTime)?game.startTime:new Date().getTime();
+    let et=(game.endTime)?game.endTime:new Date().getTime();
+    let elapsed= Math.floor((et-st)/1000);
+    if(elapsed<0||elapsed>24*60*60) elapsed=0;
+    if(elapsed<2*(characters-1)&&score==100) score+=10;
+    return Math.round(score);
+}
+
 //get the current game number based on the day
 function getGameNumber()
 {
@@ -407,12 +423,14 @@ function endGame(completed)
 
     saveGame(game);
     render();
-
+    let score=getScore();
     //pop up a dialog with the results
     let results = (game.moves?("Moves: "+game.moves+"<br>"):"")+
                   (game.wrongGuesses?("Incorrect Moves: "+game.wrongGuesses+"<br>"):"")+
                   (game.undos?("UNDOs: "+game.undos+"<br>"):"")+
-                  "Elapsed Time: "+getElapsedTime();
+                  "Elapsed Time: "+getElapsedTime()+"<br>"+
+                  (score==110?("Time Bonus: +10<br>"):"")+
+                  "Score: "+getScore();
 
     showModal(completed
         ? "Game completed.<br>"+results
@@ -424,12 +442,15 @@ function endGame(completed)
 //copy results to clipboard and pop up a confirmation dialog
 function share()
 {
+    let score=getScore();
     let result = "#Ablatonyms "+game.gameNumber+"\n";
     if(!game.completed) result+="Resigned\n";
     result += (game.moves?("Moves: "+game.moves+"\n"):"")+
                   (game.wrongGuesses?("Incorrect Moves: "+game.wrongGuesses+"\n"):"")+
                   (game.undos?("UNDOs: "+game.undos+"\n"):"")+
-                  "Elapsed Time: "+getElapsedTime()+"\n";
+                  "Elapsed Time: "+getElapsedTime()+"\n"+
+                  (score==110?("Time Bonus: +10\n"):"")+
+                  "Score: "+getScore()+"\n";
     result += "https://degroof.github.io/ablatonyms.html"
     navigator.clipboard.writeText(result).then(() =>
     {
