@@ -356,7 +356,7 @@ function checkWord(rowIdx, colIdx)
         row.status = "green";
         row.removed = colIdx;
         row.red = [];
-        game.progress=game.progress+"🟩";
+        game.progress=game.progress+"✔️";
         game.rows.push(
         {
             word: newWord,
@@ -374,7 +374,7 @@ function checkWord(rowIdx, colIdx)
     else //invalid
     {
         game.wrongGuesses=game.wrongGuesses+1;
-        game.progress=game.progress+"🟥";
+        game.progress=game.progress+"❌";
         if (!row.red) row.red = [];
         if (!row.red.includes(colIdx)) row.red.push(colIdx);
     }
@@ -466,7 +466,7 @@ function share()
         }
         else
         {
-            game.progress=game.progress+"☑️";
+            game.progress=game.progress+"🙂";
         }
     }
     result+=game.progress+"\n";
