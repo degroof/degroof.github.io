@@ -458,15 +458,15 @@ function share()
     {
         if(score==110)
         {
-            game.progress=game.progress+"🎉";
+            game.progress=game.progress+"  🎉";
         }
         else if(score==100)
         {
-            game.progress=game.progress+"💯";
+            game.progress=game.progress+"  💯";
         }
         else
         {
-            game.progress=game.progress+"🙂";
+            game.progress=game.progress+"  🙂";
         }
     }
     result+=game.progress+"\n";
