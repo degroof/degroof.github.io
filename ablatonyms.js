@@ -169,7 +169,8 @@ let game = {
     wrongGuesses:0,
     moves:0,
     undos:0,
-    collapsed:false
+    collapsed:false,
+    progress: ""
 };
 
 const SUBTITLE_TEXT = `<h2>Game #${currentGameNumber}</h2>`;
@@ -246,7 +247,8 @@ function startNewGame(word)
         wrongGuesses:0,
         moves:0,
         undos:0,
-        collapsed: collapsed
+        collapsed: collapsed,
+        progress: ""
     };
     saveGame(game);
     render();
@@ -354,6 +356,7 @@ function checkWord(rowIdx, colIdx)
         row.status = "green";
         row.removed = colIdx;
         row.red = [];
+        game.progress=game.progress+"🟩";
         game.rows.push(
         {
             word: newWord,
@@ -371,6 +374,7 @@ function checkWord(rowIdx, colIdx)
     else //invalid
     {
         game.wrongGuesses=game.wrongGuesses+1;
+        game.progress=game.progress+"🟥";
         if (!row.red) row.red = [];
         if (!row.red.includes(colIdx)) row.red.push(colIdx);
     }
@@ -393,6 +397,7 @@ function undo()
     prevRow.red = [];
     prevRow.removed = null;
     game.undos=game.undos+1;
+    game.progress=game.progress+"↩️";
     saveGame(game);
     render();
 }
@@ -444,7 +449,27 @@ function share()
 {
     let score=getScore();
     let result = "#Ablatonyms "+game.gameNumber+"\n";
-    if(!game.completed) result+="Resigned\n";
+    if(!game.completed)
+    {
+        result+="Resigned\n";
+        game.progress=game.progress+"🤷";
+    }
+    else
+    {
+        if(score==110)
+        {
+            game.progress=game.progress+"🎉";
+        }
+        else if(score==100)
+        {
+            game.progress=game.progress+"💯";
+        }
+        else
+        {
+            game.progress=game.progress+"☑️";
+        }
+    }
+    result+=game.progress+"\n";
     result += (game.moves?("Moves: "+game.moves+"\n"):"")+
                   (game.wrongGuesses?("Incorrect Moves: "+game.wrongGuesses+"\n"):"")+
                   (game.undos?("UNDOs: "+game.undos+"\n"):"")+
