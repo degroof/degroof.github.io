@@ -356,7 +356,7 @@ function checkWord(rowIdx, colIdx)
         row.status = "green";
         row.removed = colIdx;
         row.red = [];
-        game.progress=game.progress+"✔️";
+        game.progress=game.progress+"✅";
         game.rows.push(
         {
             word: newWord,
@@ -447,29 +447,30 @@ function endGame(completed)
 //copy results to clipboard and pop up a confirmation dialog
 function share()
 {
+    let symbol="   ";
     let score=getScore();
     let result = "#Ablatonyms "+game.gameNumber+"\n";
     if(!game.completed)
     {
         result+="Resigned\n";
-        game.progress=game.progress+"🤷";
+        symbol="  🤷";
     }
     else
     {
         if(score==110)
         {
-            game.progress=game.progress+"  🎉";
+            symbol="  🎉";
         }
         else if(score==100)
         {
-            game.progress=game.progress+"  💯";
+            symbol="  💯";
         }
         else
         {
-            game.progress=game.progress+"  🙂";
+            symbol="  🙂";
         }
     }
-    result+=game.progress+"\n";
+    result+=game.progress+symbol+"\n";
     result += (game.moves?("Moves: "+game.moves+"\n"):"")+
                   (game.wrongGuesses?("Incorrect Moves: "+game.wrongGuesses+"\n"):"")+
                   (game.undos?("UNDOs: "+game.undos+"\n"):"")+
