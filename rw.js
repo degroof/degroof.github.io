@@ -686,15 +686,13 @@ class UnitsConverter {
       temperature = this.fToC(temperature);
       newDirections = newDirections.replace(phrase.trim(), `${temperature}°C`);
     }
-
-    pattern = /([0-9]{3})°/g;
+    pattern = /([0-9]{3})°[^C]/g;
     while ((matcher = pattern.exec(newDirections)) !== null) {
       temperature = matcher[1];
       phrase = matcher[0];
       temperature = this.fToC(temperature);
       newDirections = newDirections.replace(phrase.trim(), `${temperature}°C`);
     }
-
     newDirections = this.convertSystemAndValue(newDirections, fromServings, toServings, fromSystem, toSystem);
     return newDirections;
   }
@@ -712,7 +710,13 @@ class UnitsConverter {
       temperature = this.cToF(temperature);
       newDirections = newDirections.replace(phrase.trim(), `${temperature}°F`);
     }
-
+    pattern = /([0-9]{3})°[^F]/g;
+    while ((matcher = pattern.exec(newDirections)) !== null) {
+      temperature = matcher[1];
+      phrase = matcher[0];
+      temperature = this.cToF(temperature);
+      newDirections = newDirections.replace(phrase.trim(), `${temperature}°F`);
+    }
     newDirections = this.convertSystemAndValue(newDirections, fromServings, toServings, fromSystem, toSystem);
     return newDirections;
   }
