@@ -1546,7 +1546,7 @@ function exportRecipes()
     var filename = "RECIPES_" + ts + ".txt";
     var blob = new Blob([data],
     {
-        type: 'application/txt'
+        type: 'txt/plain'
     });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
