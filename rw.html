@@ -1,0 +1,107 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Recipe Wizard</title>
+    <link rel="shortcut icon" href="/rw.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="rw.css">
+</head>
+<body>
+    <div id="main-screen" class="screen active">
+        <div class="action-bar">
+            <button class="action-btn" title="Add a new recipe" onclick="addRecipe()">➕ADD</button>
+            <button class="action-btn" title="Copy plain text recipe book to the clipboard for sharing" onclick="shareRecipes()">🔁SHARE</button>
+            <button class="action-btn" title="Load plain text recipe book from file" onclick="importFile()">📥IMPORT</button>
+            <button class="action-btn" title="Save plain text recipe book book to file" onclick="exportRecipes()">📤EXPORT</button>
+        </div>
+        <div class="searchbar">
+            <input type="text" id="searchField" class="searchField" title="Search by keyword or comma-separated list of ingredients" oninput="filterRecipes(this.value)" placeholder="Search on keyword or ingredients" id="search">
+        </div>
+        <div class="p-recipe-list">
+            <div class="recipe-list" id="recipe-list">
+            </div>
+        </div>
+    </div>
+    <div id="view-screen" class="screen">
+        <div class="action-bar">
+            <button class="action-btn" title="Edit this recipe" onclick="editRecipe()">✏️EDIT</button>
+            <button class="action-btn" title="Copy plain text recipe to the clipboard for sharing" onclick="shareRecipe()">🔁SHARE</button>
+            <button class="action-btn" title="Delete this recipe" onclick="deleteRecipe()">🗑️DELETE</button>
+            <button class="action-btn" title="Go back to the main page" onclick="home()">🏠︎HOME</button>
+        </div>
+        <div class="control-bar">
+            <span class="control-text">Servings:</span>
+            <button class="control-btn" title="Decrease the number of servings and recalculate the recipe" onclick="decreaseServings()">-</button>
+            <span id="view-servings" class="control-text">4</span>
+            <button class="control-btn" title="Increase the number of servings and recalculate the recipe" onclick="increaseServings()">+</button>
+            <span class="control-text" style="padding-left:3vmin">System:</span>
+            <button class="control-btn" id="unitsBtn" title="Toggle between imperial and metric, and recalculate" onclick="toggleUnits()">Imperial</button>
+        </div>
+        <div class="p-recipe-readonly">
+            <pre class="recipe-readonly" id="recipe-readonly">
+            </pre>
+        </div>
+    </div>
+    <div id="add-screen" class="screen">
+        <div class="action-bar">
+            <button class="action-btn" id="fill-btn" title="Fill the recipe from text in the clipboard" onclick="fillFromClipboard()">📋FILL</button>
+            <button class="action-btn" title="Save this recipe" onclick="saveRecipe()">💾SAVE</button>
+            <button class="action-btn" id="magic-btn" title="Mark measurements in directions that shouldn't be converted" onclick="setScalablePhrases()">✨</button>
+            <button class="action-btn" id="delete-btn" title="Delete this recipe" onclick="deleteRecipe()">🗑️DELETE</button>
+            <button class="action-btn" id="cancel-btn" title="Cancel without saving" onclick="cancelEdit()">⬅️CANCEL</button>
+            <button class="action-btn" title="Go back to the main page" onclick="home()">🏠︎HOME</button>
+        </div>
+        <div class="p-recipe-add">
+            <div class="recipe-add">
+                <div>
+                    <label for="recipe-name" class="control-text">Recipe Name: </label>
+                    <input class="control-input" title="Add the name of the recipe" id="recipe-name">
+                </div>
+                <div>
+                    <label class="control-text" for="recipe-servings">Servings:</label>
+                    <input class="control-input" title="Set number of servings" type="number" min="1" max="999" id="recipe-servings">
+                    <button class="control-btn" title="Specify metric or imperial" id="add-units-btn" onclick="toggleAddUnits()">Imperial</button>
+                </div>
+                <div>
+                    <label for="add-ingredients" class="control-text">Ingredients</label><br>
+                    <textarea class="control-text-area" title="Add ingredients, one per line" id="add-ingredients" name="add-ingredients" class="text-area" rows="12"></textarea><br>
+                </div>
+                <div>
+                    <label for="add-directions" class="control-label">Directions</label><br>
+                    <textarea class="control-text-area" title="Add directions, one step per line, followed by a period" id="add-directions" name="add-directions" class="text-area" rows="12"></textarea><br>
+                </div>
+                <div>
+                    <label for="add-notes" class="control-text">Notes</label><br>
+                    <textarea class="control-text-area" title="Add any notes" id="add-notes" name="add-notes" class="text-area" rows="3"></textarea><br>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="phrases-screen" class="screen">
+        <div class="action-bar">
+            <button class="action-btn" title="Save these selections" onclick="savePhrases()">💾SAVE</button>
+            <button class="action-btn" title="Cancel without saving" onclick="cancelPhrase()">⬅️CANCEL</button>
+        </div>
+        <div class="phrase-help">Select phrases in directions that should <i>not</i> be scaled.</div>
+        <div class="p-phrase-list">
+            <div class="phrase-list" id="phrase-list">
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-title" id="modal-title">Dialog Title</div>
+            <div class="modal-body" id="modal-body">Dialog body text goes here.</div>
+            <div id="modal-actions">
+            </div>
+        </div>
+    </div>
+
+<input type="file" id="file-input" accept=".txt" style="display:none;"/>
+
+<script src="rw.js"></script>
+</body>
+</html>
