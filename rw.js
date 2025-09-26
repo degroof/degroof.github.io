@@ -450,6 +450,8 @@ class UnitsConverter {
         this.units = UnitsConverter.PINCH;
       } else if (firstWordLc === 'g' || firstWordLc === 'gram' || firstWordLc === 'grams') {
         this.units = UnitsConverter.GRAM;
+      } else if (firstWordLc === 'kg' || firstWordLc === 'kilogram' || firstWordLc === 'kilograms') {
+        this.units = UnitsConverter.KG;
       } else if (firstWordLc === 'oz' || firstWordLc === 'oz.' || firstWordLc === 'ounces' || firstWordLc === 'ounce') {
         this.units = UnitsConverter.OZ;
       } else if ((firstWordLc === 'fl' || firstWordLc === 'fl.') && (secondWord.toLowerCase() === 'oz' || secondWord.toLowerCase() === 'oz.')) {
@@ -652,6 +654,10 @@ class UnitsConverter {
       if (this.units === UnitsConverter.GRAM) {
         this.units = UnitsConverter.LB;
         this.value = this.value / UnitsConverter.OZ_TO_G / UnitsConverter.LB_TO_OZ;
+      }
+      if (this.units === UnitsConverter.KG) {
+        this.units = UnitsConverter.LB;
+        this.value = this.value / UnitsConverter.OZ_TO_G / UnitsConverter.LB_TO_OZ *1000;
       }
     }
 
@@ -1352,7 +1358,7 @@ class Recipes {
             }
             else
             {
-                let rs=JSON.parse(`[{"title":"Pancakes","servings":"4","isMetric":false,"ingredients":"3/4 c flour\\n2 t baking powder\\n1/4 t salt\\n1 t sugar\\n1 c milk\\n1 egg\\n3 T melted butter\\n","directions":"combine dry ingredients.\\nmix in wet ingredients.\\ncook on hot griddle.\\nflip halfway through.","notes":"This is an example recipe. Try changing the number of servings or toggling Imperial to Metric."}]`);
+                let rs=JSON.parse('[{"title":"Pancakes (example recipe; tap here to view)","servings":"4","isMetric":false,"ingredients":"3/4 c flour\\n2 t baking powder\\n1/4 t salt\\n1 t sugar\\n1 c milk\\n1 egg\\n3 T melted butter\\n","directions":"combine dry ingredients.\\nmix in wet ingredients.\\ncook on hot griddle (about 1/2 cup per pancake).\\nflip halfway through.","notes":"This is an example recipe.\\nTry changing the number of servings or toggling Imperial to Metric.\\nTap Share to copy the recipe to the clipboard, then paste into a chat or email.\\n","sortScore":1,"excludedPhrases":[{"phraseText":" 1/2 cup","phraseStart":75,"phraseEnd":83,"phraseContext":"...(about 1/2 cup per pancake)..."}]}]');
                 rs.forEach((r) => this.list.push(new Recipe(r)));
                 this.sort();
             }
