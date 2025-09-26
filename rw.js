@@ -1348,7 +1348,7 @@ class Recipes {
             }
             else
             {
-                let rs=JSON.parse(`[{"title":"Pancakes","servings":"4","isMetric":false,"ingredients":"3/4 c flour\\n2 t baking powder\\n1/4 t salt\\n1 t sugar\\n1 c milk\\n1 egg\\n3 T melted butter\\n","directions":"combine dry ingredients.\\nmix in wet ingredients.\\ncook on hot griddle.\\nflip halfway through.","notes":""}]`);
+                let rs=JSON.parse(`[{"title":"Pancakes","servings":"4","isMetric":false,"ingredients":"3/4 c flour\\n2 t baking powder\\n1/4 t salt\\n1 t sugar\\n1 c milk\\n1 egg\\n3 T melted butter\\n","directions":"combine dry ingredients.\\nmix in wet ingredients.\\ncook on hot griddle.\\nflip halfway through.","notes":"This is an example recipe. Try changing the number of servings or toggling Imperial to Metric."}]`);
                 rs.forEach((r) => this.list.push(new Recipe(r)));
                 this.sort();
             }
