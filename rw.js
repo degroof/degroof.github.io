@@ -1485,6 +1485,11 @@ function importTextRecipes(text,mode)
             recipeText += line + "\n";
         }
     }
+    if(recipeText!=null && recipeText.trim().length>0)
+    {
+        let recipe = parseRecipe(recipeText,true);
+        recipes.push(recipe);
+    }
     if(mode==REPLACE)
     {
         Recipes.getInstance().list=[];
