@@ -1346,7 +1346,7 @@ class Recipes {
         }
     }
 
-    async load() {
+    load() {
         try {
             const json = localStorage.getItem('rwRecipes') || '';
             this.list = [];
@@ -1368,7 +1368,7 @@ class Recipes {
         }
     }
 
-    async save() {
+    save() {
         try {
             const serializedRecipes = JSON.stringify(this.list);
 
