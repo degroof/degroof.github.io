@@ -7,26 +7,20 @@
 }
 
 .p-recipe-list {
-  height: 86%;
+  flex-grow:1;
+  flex-shrink:1;
   width: 100vmin;
   display: flex;
-  position: absolute;
   bottom: 0;
-  flex-direction: column;
-}
-
-.p-recipe-add {
-  height: 95%;
-  width: 100vmin;
-  display: flex;
-  position: absolute;
-  bottom: 0;
+  overflow-y: auto;
   flex-direction: column;
 }
 
 .recipe-add {
+  flex-shrink:1;
+  flex-grow:1;
   overflow-y: auto;
-  margin: 3vmin auto 1.6vmin auto;
+  margin: 1vmin auto 1vmin auto;
   width: 90vmin;
   display: flex;
   flex-direction: column;
@@ -37,8 +31,9 @@
 }
 
 .recipe-list {
+  flex-shrink:1;
   overflow-y: auto;
-  margin: 3vmin auto 1.6vmin auto;
+  margin: 1vmin auto ;
   width: 90vmin;
   display: flex;
   flex-direction: column;
@@ -48,16 +43,11 @@
   padding: .4vmin;
 }
 
-.p-phrase-list {
-  height: 91%;
-  width: 100vmin;
-  display: flex;
-  position: absolute;
-  bottom: 0;
-  flex-direction: column;
-}
+
 
 .phrase-list {
+  flex-shrink:1;
+  flex-grow:1;
   overflow-y: auto;
   margin: 3vmin auto 1.6vmin auto;
   width: 90vmin;
@@ -85,27 +75,20 @@
 }
 
 .phrase-help {
-   position:absolute;
-   top: 7.5%;
-   left: 5%;
+   margin: auto;
+   text-align:center;
+   flex-shrink:0;
    font-size: 2.5vh;
  }
 
-.p-recipe-readonly {
-  height: 88%;
-  width: 100vmin;
-  display: flex;
-  position: absolute;
-  bottom: 0;
-  flex-direction: column;
-}
+
 
 .recipe-readonly {
+  flex-shrink:1;
+  flex-grow:1;
   overflow-y: auto;
-  margin: 0 auto 1.6vmin auto;
+  margin: 1vmin auto 1vmin auto;
   width: 95vmin;
-  min-height: 88%;
-  padding: .4vmin;
   background-color: var(--white);
   border: solid 1px var(--black);
   border-radius: 3px;
@@ -144,6 +127,7 @@ body {
 
 .screen {
   display: none;
+  flex-direction: column;
   background: var(--light-green);
   width: 100vmin;
   margin: 0 auto;
@@ -158,27 +142,24 @@ body {
   position: relative;
 }
 .active {
-  display: block;
+  display: flex;
 }
 
 /* Action bar at top */
 .action-bar {
   display: flex;
+  flex-shrink: 0;
   justify-content: center;
-  position: absolute;
   margin: 0 auto;
-  top: 0px;
   height: 7%;
   width: 100vmin;
-  gap: .2vmin;
 }
 
 .control-bar {
   display: flex;
+  flex-shrink:0;
   justify-content: left;
-  position: absolute;
   margin: 0 auto;
-  top: 7%;
   height: 4%;
   width: 95vmin;
   gap: .2vmin;
@@ -216,13 +197,21 @@ body {
   transition: background 0.2s;
 }
 
+.ta-div{
+  flex-shrink:1;
+  flex-grow:1;
+  margin:auto;
+}
+
 .control-text-area {
+  flex-shrink:1;
+  flex-grow:1;
   color: var(--black);
   padding: .5vmin;
   font-size: 2vh;
-  height: 20vh;
   width: 90vmin;
   margin: 0 0 1vh 0;
+  resize: none;
 }
 
 .control-input {
@@ -268,19 +257,17 @@ body {
   cursor: pointer;
 }
 
-.searchBar{
+.search-bar{
   display: flex;
+  flex-shrink: 0;
   justify-content: center;
-  position: absolute;
   margin: 0 auto;
-  top: 7%;
   height: 7%;
   width: 100vmin;
   text-align: center;
-  gap: .2vmin;
 }
 
-.searchField {
+.search-field {
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -293,20 +280,6 @@ body {
   width: 90vmin;
 }
 
-.searchClear{
-    display: flex;
-    position: absolute;
-    align-items: center;
-    right: 7%;
-    padding: 0;
-    text-align: center;
-    line-height: 100%;
-    margin-top: auto;
-    margin-bottom: auto;
-    cursor: pointer;
-    height: 100%;
-    font-size: 3vh;
-}
 
 /* Modal Dialog */
 .modal-overlay {

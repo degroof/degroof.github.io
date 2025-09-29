@@ -1748,16 +1748,10 @@ function loadViewScreen(recipe)
     servingsTxt.textContent = recipe.servings;
 }
 
-function clearSearch()
-{
-    document.getElementById("searchField").value="";
-    filterRecipes();
-}
-
 function filterRecipes()
 {
     Recipes.getInstance().setSortOn(Recipes.NAME);
-    let searchValue=document.getElementById("searchField").value.toLowerCase();
+    let searchValue=document.getElementById("search-field").value.toLowerCase();
     if(searchValue.includes(",")) Recipes.getInstance().setSortOn(Recipes.SCORE);
     let list=Recipes.getInstance().list;
     if(searchValue!="")
