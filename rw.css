@@ -276,6 +276,7 @@ body {
   top: 7%;
   height: 7%;
   width: 100vmin;
+  text-align: center;
   gap: .2vmin;
 }
 
@@ -290,6 +291,21 @@ body {
   color: var(--black);
   background: var(--white);
   width: 90vmin;
+}
+
+.searchClear{
+    display: flex;
+    position: absolute;
+    align-items: center;
+    right: 7%;
+    padding: 0;
+    text-align: center;
+    line-height: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+    cursor: pointer;
+    height: 100%;
+    font-size: 3vh;
 }
 
 /* Modal Dialog */
