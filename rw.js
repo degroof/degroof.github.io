@@ -1915,6 +1915,9 @@ function loadAdd()
     ingredients.value="";
     directions.value="";
     notes.value="";
+    resizeTextArea(ingredients);
+    resizeTextArea(directions);
+    resizeTextArea(notes);
 }
 
 function editRecipe()
@@ -1944,6 +1947,9 @@ function loadEdit()
     ingredients.value=currentRecipe.ingredients;
     directions.value=currentRecipe.directions;
     notes.value=currentRecipe.notes;
+    resizeTextArea(ingredients);
+    resizeTextArea(directions);
+    resizeTextArea(notes);
 }
 
 function fillFromClipboard()
@@ -1973,6 +1979,9 @@ function parseAndFill(text)
     ingredients.value=p.ingredients;
     directions.value=p.directions;
     notes.value=p.notes;
+    resizeTextArea(ingredients);
+    resizeTextArea(directions);
+    resizeTextArea(notes);
 }
 
 
@@ -2056,7 +2065,14 @@ function shareRecipe()
     }
 }
 
-
+function resizeTextArea(ta)
+{
+    let rows=ta.rows;
+    let fontSize=parseInt(window.getComputedStyle(ta).getPropertyValue('font-size'));
+    let minHeight=rows*fontSize*1.23;
+    ta.style.height=1;
+    ta.style.height=ta.scrollHeight>minHeight?ta.scrollHeight+5:minHeight;
+}
 
 
 function refresh()

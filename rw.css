@@ -209,8 +209,8 @@ body {
   color: var(--black);
   padding: .5vmin;
   font-size: 2vh;
-  width: 90vmin;
-  margin: 0 0 1vh 0;
+  width: 88vmin;
+  margin: 0 2vmin 1vh 0;
   resize: none;
 }
 
