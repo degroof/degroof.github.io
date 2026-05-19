@@ -82,10 +82,10 @@ gameBoardContainer.addEventListener('drop', handleDropOnContainer);
 gameBoardContainer.addEventListener('dragleave', handleDragLeave);
 
 /**
- * Calculate game number based on days since May 16, 2026
+ * Calculate game number based on days since start
  */
 function calculateGameNumber() {
-    const baseDate = new Date('2026-05-16 00:00:00').getTime();
+    const baseDate = new Date('2026-05-18 00:00:00').getTime();
     const today = new Date().getTime();
     const daysDiff = Math.floor((today - baseDate) / (1000 * 60 * 60 * 24));
     return Math.max(1, daysDiff);
@@ -304,19 +304,19 @@ function checkBoard() {
         }
     }
     wordsFound=0;
+    for(let badInd of bad)
+    {
+        for(let i=0;i<5;i++)
+        {
+            setTileColor(badInd[i],"red");
+        }
+    }
     for(let goodInd of good)
     {
         wordsFound++;
         for(let i=0;i<5;i++)
         {
             setTileColor(goodInd[i],"green");
-        }
-    }
-    for(let badInd of bad)
-    {
-        for(let i=0;i<5;i++)
-        {
-            setTileColor(badInd[i],"red");
         }
     }
     if(wordsFound==6) win();
@@ -566,7 +566,7 @@ function loadGameState() {
  */
 function updateButtonVisibility() {
     giveUpBtn.style.display = gameStatus === 'in progress' ? 'block' : 'none';
-    hintBtn.style.display = (gameStatus === 'in progress') && (hints < 3) ? 'block' : 'none';
+    hintBtn.style.display = ['new', 'in progress'].includes(gameStatus) && (hints < 3) ? 'block' : 'none';
     checkBtn.style.display = ['win', 'resign'].includes(gameStatus) ? 'block' : 'none';
     shareBtn.style.display = ['win', 'resign'].includes(gameStatus) ? 'block' : 'none';
 }
@@ -705,6 +705,12 @@ function handleGiveUp() {
  */
 function handleHint() {
 
+    if(gameStatus=='new')
+     {
+        gameStatus='in progress';
+        startTimer();
+     }
+
     for(let i=0;i<25;i++)
     {
         squareColors.push(getTileColor(i));
@@ -760,14 +766,20 @@ function handleHint() {
  */
 function handleShare() {
 
-    const row0 = getRowWord(0);
-    const row2 = getRowWord(2);
-    const row4 = getRowWord(4);
-    const col0 = getColWord(0);
-    const col2 = getColWord(2);
-    const col4 = getColWord(4);
+    let emojis = "";
+    for (i=0;i<25;i++)
+    {
+        let emoji="⬜";
+        if(i==6||i==8||i==16||i==18) emoji = "⬛";
+        let color=getTileColor(i);
+        if(color=="green") emoji="🟩";
+        if(color=="red") emoji="🟥";
+        emojis+=emoji;
+        if(i%5==4) emojis+="\n";
+    }
 
-    const shareText = `#FiveByFive - Game #${gameNumber}\nWords Found: ${wordsFound}\nMoves: ${moves}\nHints: ${hints}\nTime: ${formatSeconds(elapsed)}`;
+
+    const shareText = `#FiveByFive - Game #${gameNumber}\n${emojis}Words Found: ${wordsFound}\nMoves: ${moves}\nHints: ${hints}\nTime: ${formatSeconds(elapsed)}\nhttps://degroof.github.io/fivebyfive.html`;
     
     navigator.clipboard.writeText(shareText).then(() => {
 		showToast("Results copied to clipboard.");
