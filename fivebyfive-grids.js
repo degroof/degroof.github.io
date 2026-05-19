@@ -1,5 +1,4 @@
-// Sample grid data - each entry is an array of 7 strings:
-// [row0Word, row2Word, row4Word, col0Word, col2Word, col4Word, tileLetters]
+// [row 0, row 2, row 4, col 0, col 2, col 4, available letters]
 const grids=[
 ["COURT","SAINT","ANGLE","COSTA","USING","TITLE","NRTSCLNIGOUALITSNETAO"],
 ["SPACE","ALONG","PIECE","SHARP","ADOBE","EAGLE","LPEPADHOEGIBCRSANCEAL"],

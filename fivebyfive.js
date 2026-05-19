@@ -1,8 +1,7 @@
-// Game state
 let gameData = [];
 let gameNumber = 0;
 let gameStatus = 'new'; // 'new', 'in progress', 'win', 'resign'
-let boardState = {}; // Maps grid square number to tile letter
+let boardState = {};
 let startTime = null;
 let timerInterval = null;
 let draggedTile = null;
@@ -15,28 +14,7 @@ let checkBackupState = {};
 let tilePositions = {};
 let squareColors = [];
 
-// Black squares on the grid (those that cannot have tiles)
 const BLACK_SQUARES = [6, 8, 16, 18];
-
-// Valid target rows and columns
-const VALID_ROWS = [0, 2, 4];
-const VALID_COLS = [0, 2, 4];
-
-// Row configurations (which squares make up each row)
-const ROWS = {
-    0: [0, 1, 2, 3, 4],
-    2: [10, 11, 12, 13, 14],
-    4: [20, 21, 22, 23, 24]
-};
-
-// Column configurations (which squares make up each column)
-const COLS = {
-    0: [0, 5, 10, 15, 20],
-    2: [2, 7, 12, 17, 22],
-    4: [4, 9, 14, 19, 24]
-};
-
-
 
 // Expected letter indices
 const EXPECTED = [
@@ -74,9 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-// Add drag event listeners to game-board-container
+// drag event listeners for game-board-container
 const gameBoardContainer = document.querySelector('.game-board-container');
-
 gameBoardContainer.addEventListener('dragover', handleDragOver);
 gameBoardContainer.addEventListener('drop', handleDropOnContainer);
 gameBoardContainer.addEventListener('dragleave', handleDragLeave);
@@ -85,7 +62,7 @@ gameBoardContainer.addEventListener('dragleave', handleDragLeave);
  * Calculate game number based on days since start
  */
 function calculateGameNumber() {
-    const baseDate = new Date('2026-05-18 00:00:00').getTime();
+    const baseDate = new Date('2026-05-18 00:00:00').getTime(); //must start at midnight
     const today = new Date().getTime();
     const daysDiff = Math.floor((today - baseDate) / (1000 * 60 * 60 * 24));
     return Math.max(1, daysDiff);
@@ -99,9 +76,9 @@ function initializeGame() {
     
     // Try to load saved game state
     const savedState = loadGameState();
-    
+
+    //if it's a device that's played before and the player is returning, restore the game
     if (savedState && savedState.gameNumber === gameNumber) {
-        // Restore saved game
         gameStatus = savedState.gameStatus;
         boardState = savedState.boardState;
         startTime = savedState.startTime;
@@ -111,7 +88,7 @@ function initializeGame() {
         wordsFound = savedState.wordsFound;
         elapsed = savedState.elapsed;
     } else {
-        // New game
+        //start a new game
         gameStatus = 'new';
         boardState = {};
         startTime = null;
@@ -123,13 +100,13 @@ function initializeGame() {
     }
     
     gameNumberEl.textContent = `Game #${gameNumber}`;
-    
-    // Render UI
+
+    //set up grid, tile rack, and buttons
     renderGrid();
     renderTileRack();
     updateButtonVisibility();
     
-    // If saved game, restore board state
+    //if it's a device that's played before and the player is returning, restore the tile positions
     if (savedState && savedState.gameNumber === gameNumber) {
         restoreBoardState();
         checkBoard();
@@ -137,7 +114,7 @@ function initializeGame() {
 }
 
 /**
- * Render the 5x5 grid
+ * draw the 5x5 grid
  */
 function renderGrid() {
     gameGrid.innerHTML = '';
@@ -162,23 +139,18 @@ function renderGrid() {
 }
 
 /**
- * Render the tile rack below the grid
+ * draw the tile rack
  */
 function renderTileRack() {
     tileRack.innerHTML = '';
     const tileLetters = gameData[6];
     
-    // Create 4 rows of 5 tiles + 1 centered tile
+    // Create 3 rows of 7 tiles
     for (let i = 0; i < 21; i++) {
         const slot = document.createElement('div');
         slot.className = 'tile-rack-slot';
         slot.id = `rack-slot-${i}`;
-        
-        // Add centered class to the 21st tile
-       /* if (i === 20) {
-            slot.classList.add('centered');
-        }*/
-        
+
         tileRack.appendChild(slot);
         
         const tile = document.createElement('div');
@@ -195,57 +167,16 @@ function renderTileRack() {
     }
 }
 
-/**
- * Get current row word
- */
-function getRowWord(rowNumber) {
-    if (![0, 2, 4].includes(rowNumber)) {
-        return '';
-    }
-    
-    const squares = ROWS[rowNumber];
-    let word = '';
-    
-    for (let square of squares) {
-        if (!boardState[square]) {
-            return ''; // Not all squares populated
-        }
-        word += boardState[square];
-    }
-    
-    return word;
-}
-
-/**
- * Get current column word
- */
-function getColWord(colNumber) {
-    if (![0, 2, 4].includes(colNumber)) {
-        return '';
-    }
-    
-    const squares = COLS[colNumber];
-    let word = '';
-    
-    for (let square of squares) {
-        if (!boardState[square]) {
-            return ''; // Not all squares populated
-        }
-        word += boardState[square];
-    }
-    
-    return word;
-}
 
 /**
  * Set tile color on a grid square
  */
 function setTileColor(squareNumber, color) {
     const square = document.getElementById(`square-${squareNumber}`);
-    if (!square) return;
+    if (!square) return; //no square
     
     const tile = square.querySelector('.tile');
-    if (!tile) return;
+    if (!tile) return; //no tile on square
     
     // Remove all color classes
     tile.classList.remove('black-on-white', 'white-on-red', 'white-on-green');
@@ -260,22 +191,24 @@ function setTileColor(squareNumber, color) {
     }
 }
 
+/**
+* Get the color of the tile on a grid square
+*/
 function getTileColor(squareNumber)
 {
     const square = document.getElementById(`square-${squareNumber}`);
-    if (!square) return '';
+    if (!square) return ''; //no square
 
     const tile = square.querySelector('.tile');
-    if (!tile) return '';
+    if (!tile) return ''; //no tile on square
 
     if(tile.classList.contains('black-on-white')) return 'white';
     if(tile.classList.contains('white-on-red')) return 'red';
     if(tile.classList.contains('white-on-green')) return 'green';
-
 }
 
 /**
- * Call checkBoard() - validates current board state
+ * validates current board state, turns incorrect words red, then correct words green
  */
 function checkBoard() {
     // Save game state
@@ -286,32 +219,32 @@ function checkBoard() {
     for(let wordInd of WORD_SQUARES)
     {
         let word="";
-        for(let i=0;i<5;i++)
+        for(let i=0;i<5;i++) //assemble the word
         {
             word+=letters[boardState[wordInd[i]]];
             setTileColor(wordInd[i],"white");
         }
-        if(word.length==5)
+        if(word.length==5) //if there's a complete word
         {
-            if(WORDS.includes(word))
+            if(WORDS.includes(word)) //if the word is in the dictionary
             {
-                good.push(wordInd);
+                good.push(wordInd); //add to correct list
             }
             else
             {
-                bad.push(wordInd);
+                bad.push(wordInd); //add to incorrect list
             }
         }
     }
-    wordsFound=0;
-    for(let badInd of bad)
+    wordsFound=0; //reset number of valid words
+    for(let badInd of bad) //mark all incorrect words red
     {
         for(let i=0;i<5;i++)
         {
             setTileColor(badInd[i],"red");
         }
     }
-    for(let goodInd of good)
+    for(let goodInd of good) //mark all correct words green (overrides red t intersections)
     {
         wordsFound++;
         for(let i=0;i<5;i++)
@@ -319,24 +252,18 @@ function checkBoard() {
             setTileColor(goodInd[i],"green");
         }
     }
-    if(wordsFound==6) win();
+    if(wordsFound==6) win(); //if there's 6 correct words, player wins, end game
     saveGameState();
-    // Update button visibility
     updateButtonVisibility();
 }
 
 /**
- * Win the game
+ * player wins
  */
 function win() {
     gameStatus = 'win';
-    
-    for (let squareNumber = 0; squareNumber < 25; squareNumber++) {
-        if (boardState[squareNumber]) {
-            setTileColor(squareNumber, 'green');
-        }
-    }
 
+    //stop timer
     if (timerInterval) {
         clearInterval(timerInterval);
     }
@@ -346,16 +273,16 @@ function win() {
 }
 
 /**
- * Handle drag start
+ * drag start
  */
 function handleDragStart(e) {
-    // Only allow dragging if game status is 'new' or 'in progress'
+    //only allow dragging if the game is playable
     if (!['new', 'in progress'].includes(gameStatus)) {
         e.preventDefault();
         return;
     }
     
-    // Start timer if not already started
+    //start timer if not already started
     if (gameStatus === 'new') {
         gameStatus = 'in progress';
         startTimer();
@@ -365,52 +292,43 @@ function handleDragStart(e) {
     draggedTile = e.target;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', e.target.innerHTML);
-    
-    // Visual feedback
-    e.target.style.opacity = '0.5';
 }
 
 /**
- * Handle drag end
+ * drag end
  */
 function handleDragEnd(e) {
-    if (draggedTile) {
-        draggedTile.style.opacity = '1';
-    }
     draggedTile = null;
 }
 
 /**
- * Handle drag over
+ * drag over
  */
-
 function handleDragOver(e) {
     if (!draggedTile) return;
 
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 
-    // Check if target is a grid square or the container
-    if (e.target.classList.contains('grid-square')) {
+    if (e.target.classList.contains('grid-square')) { //grid square
         const squareNum = parseInt(e.target.id.split('-')[1]);
         if (!BLACK_SQUARES.includes(squareNum)) {
             e.target.classList.add('drag-over');
         }
-    } else if (e.target.closest('.game-board-container')) {
-        // Highlight container area
+    } else if (e.target.closest('.game-board-container')) { //background
         e.target.classList.add('drag-over');
     }
 }
 
 /**
- * Handle drag leave
+ * drag leave
  */
 function handleDragLeave(e) {
     e.target.classList.remove('drag-over');
 }
 
 /**
- * Handle drop
+ * drop
  */
 function handleDrop(e) {
     e.preventDefault();
@@ -419,29 +337,28 @@ function handleDrop(e) {
     
     if (!draggedTile) return;
     
-    // Only allow dropping if game is 'new' or 'in progress'
+    //only allow dropping if game is playable (this should never happen)
     if (!['new', 'in progress'].includes(gameStatus)) {
         return;
     }
     
     const squareNumber = parseInt(e.target.id.split('-')[1]);
 
-    //can't drop on a tile
+    //can't drop on another tile; return to rack
     if(e.target.id.split('-')[0]==="tile") return;
 
-    // Check if it's a valid drop target
+    //can't drop on a black square; return to rack
     if (BLACK_SQUARES.includes(squareNumber)) {
-        // Black square - return to original location
         returnTileToRack(draggedTile);
         checkBoard();
         return;
     }
     
-    // Valid drop - place tile on grid
+    //drop tile on grid
     const tileIndex = parseInt(draggedTile.dataset.tileIndex);
     const letter = gameData[6][tileIndex];
 
-    // Remove from previous location in boardState
+    //delete tile from old position in board state, if any
     for (let sq in boardState) {
         const tile = document.getElementById(`square-${sq}`).querySelector(`#tile-${tileIndex}`);
         if (tile) {
@@ -449,42 +366,44 @@ function handleDrop(e) {
         }
     }
 
-    // Add to new location
+    //add tile to new position in board state
     boardState[squareNumber] = tileIndex;
 
-    // Move tile to grid square
+    //drop tile on grid square
     e.target.appendChild(draggedTile);
     draggedTile.style.position = 'absolute';
     draggedTile.style.top = '4';
     draggedTile.style.left = '4';
+
+    //increment moves
     moves++;
+    //check words
     checkBoard();
 }
 
 /**
- * Handle drop on game-board-container (outside grid)
+ * drop on background (outside grid); return to rack
  */
 function handleDropOnContainer(e) {
     e.preventDefault();
     e.target.classList.remove('drag-over');
 
-    if (!draggedTile) return;
+    if (!draggedTile) return; //no tile?
 
-    // If dropped outside the grid, return to rack
     returnTileToRack(draggedTile);
     checkBoard();
 }
 
 
 /**
- * Return tile to original rack position
+ *return tile to original rack position
  */
 function returnTileToRack(tile) {
     const tileIndex = parseInt(tile.dataset.tileIndex);
     const rackSlot = tilePositions[tileIndex];
     
     if (rackSlot) {
-        // Remove from grid board state
+        //delete from board state
         for (let square in boardState) {
             const squareEl = document.getElementById(`square-${square}`);
             if (squareEl && squareEl.querySelector(`#tile-${tileIndex}`)) {
@@ -493,18 +412,18 @@ function returnTileToRack(tile) {
             }
         }
         
-        // Reset tile colors
+        //clear any tile colors
         tile.classList.remove('white-on-red', 'white-on-green');
         tile.classList.add('black-on-white');
         
-        // Move back to rack
+        //move back to rack
         rackSlot.appendChild(tile);
         tile.style.position = 'relative';
     }
 }
 
 /**
- * Restore board state from saved state
+ *re-draw board from saved state
  */
 function restoreBoardState() {
     for (let squareNumber in boardState) {
@@ -525,7 +444,7 @@ function restoreBoardState() {
 }
 
 /**
- * Start the timer
+ *get the timer running
  */
 function startTimer() {
     startTime = Date.now();
@@ -536,7 +455,7 @@ function startTimer() {
 }
 
 /**
- * Save game state to local storage
+ *save game to local storage
  */
 function saveGameState() {
     const state = {
@@ -554,7 +473,7 @@ function saveGameState() {
 }
 
 /**
- * Load game state from local storage
+ *load game from local storage
  */
 function loadGameState() {
     const saved = localStorage.getItem('5x5_gameState');
@@ -562,7 +481,7 @@ function loadGameState() {
 }
 
 /**
- * Update button visibility based on game status
+ *update button visibility based on game status
  */
 function updateButtonVisibility() {
     giveUpBtn.style.display = gameStatus === 'in progress' ? 'block' : 'none';
@@ -572,7 +491,7 @@ function updateButtonVisibility() {
 }
 
 /**
- * Clear board
+ *clear board (all tiles back to original rack positions)
  */
 function clearBoard()
 {
@@ -596,7 +515,7 @@ function clearBoard()
 
 
 /**
- * Handle CHECK button - show solution temporarily
+ * "check" button pressed - show expected solution
  */
 function handleCheckMouseDown() {
     if (!['win', 'resign'].includes(gameStatus)) return;
@@ -608,27 +527,21 @@ function handleCheckMouseDown() {
         squareColors.push(getTileColor(i));
         setTileColor(i,'white');
     }
-
-    
-    // Backup current board state
+    //backup current board state
     checkBackupState = JSON.parse(JSON.stringify(boardState));
-    
     clearBoard();
-    // Place the solution
-    placeWords(true);
+    //show the solution
+    showExpectedSolution();
 }
 
 /**
- * Handle CHECK button release - restore previous state
+ *"check" button released - restore board state
  */
 function handleCheckMouseUp() {
     if (!checkActive) return;
-    
     checkActive = false;
-    
     clearBoard();
-    
-    // Restore backed up state
+    //restore backed up state
     boardState = checkBackupState;
     restoreBoardState();
 
@@ -639,42 +552,29 @@ function handleCheckMouseUp() {
 }
 
 /**
- * Place words on the board (for CHECK function)
+ *show expected solution
  */
-function placeWords(isCheck) {
+function showExpectedSolution() {
     const words = gameData.slice(0, 6); // First 6 entries are the words
     
-    // Place row words
-    const rowWords = {
-        0: words[0],
-        2: words[1],
-        4: words[2]
-    };
-    
-    // Place column words
-    const colWords = {
-        0: words[3],
-        2: words[4],
-        4: words[5]
-    };
-
     let letters = gameData[6];
-    let usedTiles=[];
-    // Place row words
+    let usedTiles=[]; //list of tiles already used to display the words
+    // iterate through all 25 squares
     for (let i=0;i<25;i++) {
-        let index=EXPECTED[i];
-        let wordInd=index[0];
-        let letterInd=index[1];
-        if(wordInd>=0)
+        let index=EXPECTED[i]; //get the word/letter combo for the square
+        let wordInd=index[0]; //word number
+        let letterInd=index[1]; //letter of word
+        if(wordInd>=0) //if the number is -1, it's a black square
         {
-            let word=gameData[wordInd];
-            let letter=word[letterInd];
+            let word=gameData[wordInd]; //get the expected word
+            let letter=word[letterInd]; //get the letter for that position
+            //find the first matching available tile
             let tileIndex = letters.split('').findIndex((char, i) => char === letter && !usedTiles.includes(i));
-            usedTiles.push(tileIndex)
+            usedTiles.push(tileIndex); //add this tile to the used list
             const tile = document.getElementById(`tile-${tileIndex}`);
             if (tile) {
                 const square = document.getElementById(`square-${i}`);
-                if (square) {
+                if (square) { //position the tile on the grid
                     square.appendChild(tile);
                     tile.style.position = 'absolute';
                     tile.style.top = '4';
@@ -688,71 +588,67 @@ function placeWords(isCheck) {
 }
 
 /**
- * Handle GIVE UP button
+ * "give up" clicked
  */
 function handleGiveUp() {
     gameStatus = 'resign';
     saveGameState();
     updateButtonVisibility();
     
-    if (timerInterval) {
+    if (timerInterval) { //stop timer
         clearInterval(timerInterval);
     }
 }
 
 /**
- * Handle HINT button
+ * "hint" clicked
  */
 function handleHint() {
 
-    if(gameStatus=='new')
+    if(gameStatus=='new') //start game if not already started
      {
         gameStatus='in progress';
         startTimer();
      }
 
-    for(let i=0;i<25;i++)
+    for(let i=0;i<25;i++) //clear any tile colors
     {
         squareColors.push(getTileColor(i));
         setTileColor(i,'white');
     }
 
-    hints++;
-    let usedTiles=[];
-    let revealedSquares=[];
-    boardState = {};
-
-
+    hints++; //increment number of hints
+    let usedTiles=[]; //list of tiles already placed
+    let revealedSquares=[]; //list of squares to fill
+    boardState = {}; //reset board state
 
     clearBoard();
 
-
-    if(hints>=1) revealedSquares.push(12);
+    if(hints>=1) revealedSquares.push(12); //center square
     if(hints>=2)
     {
-        revealedSquares.push(2);
+        revealedSquares.push(2); //middle square of each side
         revealedSquares.push(10);
         revealedSquares.push(14);
         revealedSquares.push(22);
     }
     if(hints>=3)
     {
-        revealedSquares.push(0);
+        revealedSquares.push(0); //corner squares
         revealedSquares.push(4);
         revealedSquares.push(20);
         revealedSquares.push(24);
     }
-    let letters = gameData[6];
+    let letters = gameData[6]; //list of available letters
     let rowText = gameData[0]+"     "+gameData[1]+"     "+gameData[2];
 
     for(const square of revealedSquares)
     {
         let targetLetter = rowText[square];
-
-
+        //get next available matching tile
         let index = letters.split('').findIndex((char, i) => char === targetLetter && !usedTiles.includes(i));
-        usedTiles.push(index)
-        boardState[square]=index;
+        usedTiles.push(index); //add to list of already used
+        boardState[square]=index; //update board state
     }
 
     restoreBoardState();
@@ -762,11 +658,10 @@ function handleHint() {
 }
 
 /**
- * Handle SHARE button
+ * "share" clicked
  */
 function handleShare() {
-
-    let emojis = "";
+    let emojis = ""; //square emojis for grid display
     for (i=0;i<25;i++)
     {
         let emoji="⬜";
@@ -778,20 +673,21 @@ function handleShare() {
         if(i%5==4) emojis+="\n";
     }
 
-
     const shareText = `#FiveByFive - Game #${gameNumber}\n${emojis}Words Found: ${wordsFound}\nMoves: ${moves}\nHints: ${hints}\nTime: ${formatSeconds(elapsed)}\nhttps://degroof.github.io/fivebyfive.html`;
     
     navigator.clipboard.writeText(shareText).then(() => {
 		showToast("Results copied to clipboard.");
-   });
+    });
 }
 
+//pop up toast, saying results have been copied
 function showToast() {
   const toast = document.getElementById("toast");
   toast.className = "show";
   setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
+//format seconds into hh:mm:ss
 function formatSeconds(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -806,9 +702,10 @@ function formatSeconds(totalSeconds) {
 }
 
 /**
- * Setup event listeners
+ *set up event listeners
  */
 function setupEventListeners() {
+    //instructions
     instructionsToggle.addEventListener('click', () => {
         if (instructionsContent.style.display === 'none') {
             instructionsContent.style.display = 'block';
@@ -819,11 +716,12 @@ function setupEventListeners() {
     
     giveUpBtn.addEventListener('click', handleGiveUp);
     hintBtn.addEventListener('click', handleHint);
+    shareBtn.addEventListener('click', handleShare);
 
+    //"check" button press/release
     checkBtn.addEventListener('mousedown', handleCheckMouseDown);
     checkBtn.addEventListener('mouseup', handleCheckMouseUp);
     checkBtn.addEventListener('touchstart', handleCheckMouseDown);
     checkBtn.addEventListener('touchend', handleCheckMouseUp);
     
-    shareBtn.addEventListener('click', handleShare);
 }
