@@ -826,4 +826,8 @@ function setupEventListeners() {
     checkBtn.addEventListener('touchstart', handleCheckMouseDown, { passive: false });
     checkBtn.addEventListener('touchend', handleCheckMouseUp, { passive: false });
 
+    window.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+    });
+
 }
