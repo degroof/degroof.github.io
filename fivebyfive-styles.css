@@ -62,11 +62,6 @@ body {
     width: 100%;
 }
 
-.instructions-toggle:hover {
-    background: #e0e0e0;
-    transform: translateY(-2px);
-}
-
 .instructions-content {
     background: #f9f9f9;
     border-left: 4px solid #667eea;
@@ -272,24 +267,12 @@ body {
     color: white;
 }
 
-#giveUpBtn:hover {
-    background: #5252ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-}
-
 #checkBtn {
     background: #6b6bff;
     color: white;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-}
-
-#checkBtn:hover {
-    background: #5252ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
 }
 
 #hintBtn {
@@ -300,23 +283,10 @@ body {
     -webkit-touch-callout: none;
 }
 
-#hintBtn:hover {
-    background: #5252ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
-}
-
-
 #shareBtn {
     background: #6b6bff;
     color: white;
     -webkit-tap-highlight-color: transparent;
-}
-
-#shareBtn:hover {
-    background: #5252ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 #shareBtn:active {
