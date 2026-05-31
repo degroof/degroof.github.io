@@ -260,14 +260,6 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 120px;
-}
-
-#giveUpBtn {
-    background: #6b6bff;
-    color: white;
-}
-
-#checkBtn {
     background: #6b6bff;
     color: white;
     user-select: none;
@@ -275,29 +267,7 @@ body {
     -webkit-touch-callout: none;
 }
 
-#hintBtn {
-    background: #6b6bff;
-    color: white;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-}
 
-#shareBtn {
-    background: #6b6bff;
-    color: white;
-    -webkit-tap-highlight-color: transparent;
-}
-
-#shareBtn:active {
-    transform: translateY(0);
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.game-button:active {
-    transform: translateY(0);
-}
 
 /* Mobile Responsive */
 @media (max-width: 600px) {
@@ -379,17 +349,6 @@ body {
     }
 }
 
-/* Touch-friendly adjustments */
-@media (hover: none) and (pointer: coarse) {
-    .game-button:active {
-        transform: scale(0.98);
-    }
-
-    .tile {
-        width: 100%;
-        height: 100%;
-    }
-}
 
 @media (hover: hover) and (pointer: fine) {
     .tile:hover {
