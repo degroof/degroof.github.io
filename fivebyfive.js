@@ -44,6 +44,7 @@ const tileRack = document.getElementById('tileRack');
 const gameNumberEl = document.getElementById('gameNumber');
 const giveUpBtn = document.getElementById('giveUpBtn');
 const hintBtn = document.getElementById('hintBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
 const checkBtn = document.getElementById('checkBtn');
 const shareBtn = document.getElementById('shareBtn');
 const instructionsToggle = document.getElementById('instructionsToggle');
@@ -677,6 +678,7 @@ function loadGameState() {
 function updateButtonVisibility() {
     giveUpBtn.style.display = gameStatus === 'in progress' ? 'block' : 'none';
     hintBtn.style.display = ['new', 'in progress'].includes(gameStatus) ? 'block' : 'none';
+    shuffleBtn.style.display = ['new', 'in progress'].includes(gameStatus) ? 'block' : 'none';
     checkBtn.style.display = ['win', 'resign'].includes(gameStatus) ? 'block' : 'none';
     shareBtn.style.display = ['win', 'resign'].includes(gameStatus) ? 'block' : 'none';
 }
@@ -753,7 +755,6 @@ function handleHintMouseDown(e) {
     if(hints<3)hints++;
     showHints();
     saveGameState();
-
 }
 
 function showHints()
@@ -789,6 +790,51 @@ function showHints()
  */
 function handleHintMouseUp(e) {
     e.preventDefault();
+}
+
+/**
+ * "shuffle" button pressed - shuffle rack
+ */
+function handleShuffleMouseDown(e) {
+    e.preventDefault();
+    shuffleRack();
+}
+
+/**
+ *"shuffle" button released
+ */
+function handleShuffleMouseUp(e) {
+    e.preventDefault();
+}
+
+function shuffleRack()
+{
+    let tileSlots = [];
+    let emptySlots = [];
+    let remainingSlots = [];
+    //all slots in order
+    for(let i=0;i<21;i++) remainingSlots.push(i);
+    //randomly arrange slots
+    for(let i=0;i<21;i++)
+    {
+        let r=Math.floor(Math.random()*remainingSlots.length);
+        let slotNum = remainingSlots[r];
+        remainingSlots.splice(r,1);
+        let slot=document.getElementById(`rack-slot-${slotNum}`);
+        if(slot.children.length==0)
+        {
+            emptySlots.push(slot);
+        }
+        else
+        {
+            tileSlots.push(slot);
+        }
+    }
+    console.log(tileSlots);
+    console.log(emptySlots);
+    tileRack.innerHTML = '';
+    for(let slot of tileSlots) tileRack.appendChild(slot);
+    for(let slot of emptySlots) tileRack.appendChild(slot);
 }
 
 /**
@@ -977,6 +1023,12 @@ function setupEventListeners() {
     hintBtn.addEventListener('touchstart', handleHintMouseDown, { passive: false });
     hintBtn.addEventListener('touchend', handleHintMouseUp, { passive: false });
     
+    //"shuffle" button press/release
+    shuffleBtn.addEventListener('mousedown', handleShuffleMouseDown);
+    shuffleBtn.addEventListener('mouseup', handleShuffleMouseUp);
+    shuffleBtn.addEventListener('touchstart', handleShuffleMouseDown, { passive: false });
+    shuffleBtn.addEventListener('touchend', handleShuffleMouseDown, { passive: false });
+
     //"check" button press/release
     checkBtn.addEventListener('mousedown', handleCheckMouseDown);
     checkBtn.addEventListener('mouseup', handleCheckMouseUp);
