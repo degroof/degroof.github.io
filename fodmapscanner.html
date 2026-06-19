@@ -14,6 +14,7 @@
             --danger: #ff3b30;
             --warning: #ff9500;
             --success: #34c759;
+            --border: #e5e5ea;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -33,21 +34,22 @@
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        h1 { font-size: 1.5rem; margin-top: 0; text-align: center; }
+        h1 { font-size: 1.5rem; margin: 0; text-align: center; }
         .camera-section {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-bottom: 20px;
         }
-        /* Hidden file input, triggered by a styled button */
         #camera-input { display: none; }
         .btn {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
+            padding: 14px;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: bold;
@@ -56,7 +58,7 @@
         }
         #preview {
             width: 100%;
-            max-height: 250px;
+            max-height: 200px;
             object-fit: contain;
             border-radius: 6px;
             display: none;
@@ -69,18 +71,57 @@
             min-height: 20px;
         }
         .result-box {
-            margin-top: 15px;
             padding: 15px;
             border-radius: 8px;
             background: #f9f9f9;
-            border: 1px solid #eee;
+            border: 1px solid var(--border);
+            display: none;
+            flex-direction: column;
+            gap: 12px;
         }
-        .flagged-item {
-            color: var(--danger);
+        .score-display {
+            font-size: 1.1rem;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .score-safe { background: #e8f5e9; color: var(--success); font-weight: bold; }
+        .score-warn { background: #ffebee; color: var(--danger); font-weight: bold; }
+        
+        label { font-weight: bold; font-size: 0.9rem; color: #555; }
+        textarea {
+            width: 100%;
+            height: 80px;
+            box-sizing: border-box;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+        .note { font-size: 0.8rem; color: #666; margin-top: -5px; }
+
+        /* Help Section styling using native details/summary */
+        details {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        summary {
             font-weight: bold;
+            cursor: pointer;
+            outline: none;
+            user-select: none;
         }
-        .score-safe { color: var(--success); font-weight: bold; }
-        .score-warn { color: var(--warning); font-weight: bold; }
+        .help-list {
+            margin-top: 10px;
+            padding-left: 20px;
+            font-size: 0.9rem;
+            column-count: 2; /* Splits the keywords into two neat columns on mobile */
+            color: #444;
+        }
     </style>
 </head>
 <body>
@@ -96,39 +137,51 @@
 
     <div id="status" class="status"></div>
 
-    <div id="results" class="result-box" style="display: none;">
-        <h3>Analysis Results</h3>
-        <p id="fodmap-score"></p>
-        <div id="detected-flags"></div>
-        <hr>
-        <h4>Extracted Text:</h4>
-        <p id="raw-text" style="font-size: 0.85rem; color: #555; white-space: pre-wrap;"></p>
+    <div id="results" class="result-box">
+        <div id="score-zone" class="score-display"></div>
+        
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label for="keyword-input">Detected High-FODMAP Ingredients:</label>
+            <textarea id="keyword-input" placeholder="No triggers found. Type here to manually add some..."></textarea>
+            <span class="note">💡 Something missing or wrong? Edit the list above (separated by commas) to recalculate.</span>
+        </div>
     </div>
+
+    <details>
+        <summary>Supported Keywords Lookup</summary>
+        <ul id="help-list" class="help-list"></ul>
+    </details>
 </div>
 
 <script>
-// A basic lookup dictionary of high-FODMAP triggers
+// Master dictionary of high-FODMAP items
 const HIGH_FODMAP_INGREDIENTS = [
-    "fructose", "high fructose corn syrup", "honey", "agave",
-    "lactose", "milk", "cream", "ice cream", "yogurt",
-    "sorbitol", "mannitol", "xylitol", "maltitol", "isomalt",
-    "onion", "garlic", "shallot", "leek",
-    "wheat", "rye", "barley", "inulin", "chicory root"
+    "agave", "barley", "chicory root", "cream", "fructose", 
+    "garlic", "high fructose corn syrup", "honey", "ice cream", 
+    "inulin", "isomalt", "lactose", "leek", "maltitol", 
+    "mannitol", "milk", "onion", "rye", "shallot", 
+    "sorbitol", "wheat", "xylitol", "yogurt"
 ];
+
+// Populate the help area automatically on load
+const helpList = document.getElementById('help-list');
+HIGH_FODMAP_INGREDIENTS.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    helpList.appendChild(li);
+});
 
 const cameraInput = document.getElementById('camera-input');
 const preview = document.getElementById('preview');
 const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
-const rawTextP = document.getElementById('raw-text');
-const scoreP = document.getElementById('fodmap-score');
-const flagsDiv = document.getElementById('detected-flags');
+const keywordInput = document.getElementById('keyword-input');
+const scoreZone = document.getElementById('score-zone');
 
 cameraInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Show preview
     preview.src = URL.createObjectURL(file);
     preview.style.display = 'block';
     resultsDiv.style.display = 'none';
@@ -138,57 +191,67 @@ cameraInput.addEventListener('change', function(e) {
 
 async function processImage(file) {
     statusDiv.textContent = "Initializing OCR engine...";
-    
     try {
-        // Tesseract automatically initializes workers
         const worker = await Tesseract.createWorker('eng');
-        
-        statusDiv.textContent = "Reading ingredients list...";
+        statusDiv.textContent = "Analyzing package text...";
         const ret = await worker.recognize(file);
         const text = ret.data.text;
-        
         await worker.terminate();
         
         statusDiv.textContent = "";
-        displayResults(text);
+        analyzeText(text);
     } catch (error) {
         console.error(error);
         statusDiv.textContent = "Error scanning image. Try again.";
     }
 }
 
-function displayResults(text) {
-    rawTextP.textContent = text;
-    
-    // Normalize text for matching (lowercase, strip weird spaces)
-    const normalizedText = text.toLowerCase();
-    
-    // Find matches
-    let foundTriggers = [];
+function analyzeText(rawText) {
+    const normalizedText = rawText.toLowerCase();
+    let matchesWithIndex = [];
+
+    // Find ingredients and log their starting positions in the text
     HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
-        if (normalizedText.includes(ingredient)) {
-            foundTriggers.push(ingredient);
+        let index = normalizedText.indexOf(ingredient);
+        // Loop to find all instances if an ingredient appears multiple times
+        while (index !== -1) {
+            matchesWithIndex.push({ name: ingredient, index: index });
+            index = normalizedText.indexOf(ingredient, index + 1);
         }
     });
 
-    // Simple Scoring Rules
-    resultsDiv.style.display = 'block';
-    flagsDiv.innerHTML = "";
+    // Sort matches by the order they physically appeared in the ingredients list
+    matchesWithIndex.sort((a, b) => a.index - b.index);
+
+    // Extract just the unique names in order
+    const orderedMatches = [...new Set(matchesWithIndex.map(item => item.name))];
+
+    // Populate the text area
+    keywordInput.value = orderedMatches.join(", ");
     
-    if (foundTriggers.length === 0) {
-        scoreP.innerHTML = "Score: <span class='score-safe'>Likely Low FODMAP</span>";
-        flagsDiv.innerHTML = "<p>No common high-FODMAP ingredients detected.</p>";
+    // Trigger the initial scoring
+    calculateScore();
+    resultsDiv.style.display = 'flex';
+}
+
+function calculateScore() {
+    // Parse the textarea, splitting by commas, discarding empty spaces
+    const currentKeywords = keywordInput.value
+        .split(",")
+        .map(item => item.trim().toLowerCase())
+        .filter(item => item.length > 0);
+
+    if (currentKeywords.length === 0) {
+        scoreZone.className = "score-display score-safe";
+        scoreZone.textContent = "Likely Low FODMAP";
     } else {
-        scoreP.innerHTML = `Score: <span class='score-warn'>High FODMAP Triggers Found (${foundTriggers.length})</span>`;
-        
-        let listHtml = "<ul>";
-        foundTriggers.forEach(item => {
-            listHtml += `<li>Flagged: <span class="flagged-item">${item}</span></li>`;
-        });
-        listHtml += "</ul>";
-        flagsDiv.innerHTML = listHtml;
+        scoreZone.className = "score-display score-warn";
+        scoreZone.textContent = `High FODMAP Triggers Found (${currentKeywords.length})`;
     }
 }
+
+// Live listener: Calculate scoring on keyup or paste inside the textarea
+keywordInput.addEventListener('input', calculateScore);
 </script>
 
 </body>
