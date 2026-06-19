@@ -77,7 +77,7 @@
             border: 1px solid var(--border);
             display: none;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
         .score-display {
             font-size: 1.1rem;
@@ -89,9 +89,18 @@
         .score-warn { background: #ffebee; color: var(--danger); font-weight: bold; }
         
         label { font-weight: bold; font-size: 0.9rem; color: #555; }
+        .ocr-output-box {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            min-height: 20px;
+            font-size: 0.95rem;
+            color: #222;
+        }
         textarea {
             width: 100%;
-            height: 80px;
+            height: 70px;
             box-sizing: border-box;
             padding: 10px;
             border-radius: 6px;
@@ -100,26 +109,19 @@
             font-size: 0.95rem;
             resize: vertical;
         }
-        .note { font-size: 0.8rem; color: #666; margin-top: -5px; }
 
-        /* Help Section styling using native details/summary */
         details {
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px;
             background: #fafafa;
         }
-        summary {
-            font-weight: bold;
-            cursor: pointer;
-            outline: none;
-            user-select: none;
-        }
+        summary { font-weight: bold; cursor: pointer; outline: none; }
         .help-list {
             margin-top: 10px;
             padding-left: 20px;
             font-size: 0.9rem;
-            column-count: 2; /* Splits the keywords into two neat columns on mobile */
+            column-count: 2;
             color: #444;
         }
     </style>
@@ -141,9 +143,14 @@
         <div id="score-zone" class="score-display"></div>
         
         <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="keyword-input">Detected High-FODMAP Ingredients:</label>
-            <textarea id="keyword-input" placeholder="No triggers found. Type here to manually add some..."></textarea>
-            <span class="note">💡 Something missing or wrong? Edit the list above (separated by commas) to recalculate.</span>
+            <label>Detected via Scan:</label>
+            <div id="ocr-keywords" class="ocr-output-box">None</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label for="user-input">Manually Add/Correct Ingredients:</label>
+            <textarea id="user-input" placeholder="e.g. garlic, honey, inulin"></textarea>
+            <span style="font-size: 0.8rem; color: #666; margin-top: -3px;">💡 Type extra ingredients separated by commas to update the live score.</span>
         </div>
     </div>
 
@@ -154,7 +161,6 @@
 </div>
 
 <script>
-// Master dictionary of high-FODMAP items
 const HIGH_FODMAP_INGREDIENTS = [
     "agave", "barley", "chicory root", "cream", "fructose", 
     "garlic", "high fructose corn syrup", "honey", "ice cream", 
@@ -163,7 +169,10 @@ const HIGH_FODMAP_INGREDIENTS = [
     "sorbitol", "wheat", "xylitol", "yogurt"
 ];
 
-// Populate the help area automatically on load
+// Memory state to hold onto camera keywords between keystrokes
+let detectedOcrKeywords = [];
+
+// Populate help area
 const helpList = document.getElementById('help-list');
 HIGH_FODMAP_INGREDIENTS.forEach(item => {
     const li = document.createElement('li');
@@ -175,7 +184,8 @@ const cameraInput = document.getElementById('camera-input');
 const preview = document.getElementById('preview');
 const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
-const keywordInput = document.getElementById('keyword-input');
+const ocrKeywordsDiv = document.getElementById('ocr-keywords');
+const userInput = document.getElementById('user-input');
 const scoreZone = document.getElementById('score-zone');
 
 cameraInput.addEventListener('change', function(e) {
@@ -210,48 +220,55 @@ function analyzeText(rawText) {
     const normalizedText = rawText.toLowerCase();
     let matchesWithIndex = [];
 
-    // Find ingredients and log their starting positions in the text
     HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
         let index = normalizedText.indexOf(ingredient);
-        // Loop to find all instances if an ingredient appears multiple times
         while (index !== -1) {
             matchesWithIndex.push({ name: ingredient, index: index });
             index = normalizedText.indexOf(ingredient, index + 1);
         }
     });
 
-    // Sort matches by the order they physically appeared in the ingredients list
+    // Sort matching ingredients by where they appeared in physical text order
     matchesWithIndex.sort((a, b) => a.index - b.index);
 
-    // Extract just the unique names in order
-    const orderedMatches = [...new Set(matchesWithIndex.map(item => item.name))];
+    // Filter to unique items in order, store to state
+    detectedOcrKeywords = [...new Set(matchesWithIndex.map(item => item.name))];
 
-    // Populate the text area
-    keywordInput.value = orderedMatches.join(", ");
+    // Update read-only UI component
+    if (detectedOcrKeywords.length > 0) {
+        ocrKeywordsDiv.textContent = detectedOcrKeywords.join(", ");
+    } else {
+        ocrKeywordsDiv.textContent = "None";
+    }
     
-    // Trigger the initial scoring
-    calculateScore();
+    // Calculate compound score and show results panel
+    calculateCombinedScore();
     resultsDiv.style.display = 'flex';
 }
 
-function calculateScore() {
-    // Parse the textarea, splitting by commas, discarding empty spaces
-    const currentKeywords = keywordInput.value
+function calculateCombinedScore() {
+    // 1. Process user typed entries
+    const manualItems = userInput.value
         .split(",")
         .map(item => item.trim().toLowerCase())
         .filter(item => item.length > 0);
 
-    if (currentKeywords.length === 0) {
+    // 2. Blend OCR matches array and User entries array together cleanly
+    const combinedSet = new Set([...detectedOcrKeywords, ...manualItems]);
+    const totalCount = combinedSet.size;
+
+    // 3. Render visual score
+    if (totalCount === 0) {
         scoreZone.className = "score-display score-safe";
         scoreZone.textContent = "Likely Low FODMAP";
     } else {
         scoreZone.className = "score-display score-warn";
-        scoreZone.textContent = `High FODMAP Triggers Found (${currentKeywords.length})`;
+        scoreZone.textContent = `High FODMAP Triggers Found (${totalCount})`;
     }
 }
 
-// Live listener: Calculate scoring on keyup or paste inside the textarea
-keywordInput.addEventListener('input', calculateScore);
+// Watch user text mutations for immediate real-time calculations
+userInput.addEventListener('input', calculateCombinedScore);
 </script>
 
 </body>
