@@ -247,12 +247,6 @@ function calculateCombinedScore() {
         .map(item => item.trim().toLowerCase())
         .filter(item => item.length > 0 && HIGH_FODMAP_INGREDIENTS.includes(item));
 
-const mi= userInput.value
-        .split(",")
-        .map(item => item.trim().toLowerCase())
-        .filter(item => item.length > 0);
-console.log(mi);
-
     const combinedSet = new Set([...detectedOcrKeywords, ...validManualItems]);
     const totalCount = combinedSet.size;
 
