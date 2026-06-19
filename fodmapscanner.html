@@ -150,7 +150,7 @@
         <div style="display: flex; flex-direction: column; gap: 6px;">
             <label for="user-input">Manually Add/Correct Ingredients:</label>
             <textarea id="user-input" placeholder="e.g. garlic, honey, inulin"></textarea>
-            <span style="font-size: 0.8rem; color: #666; margin-top: -3px;">💡 Type extra ingredients separated by commas to update the live score.</span>
+            <span style="font-size: 0.8rem; color: #666; margin-top: -3px;">💡 Type extra ingredients separated by commas. Low FODMAP items will be ignored.</span>
         </div>
     </div>
 
@@ -169,7 +169,6 @@ const HIGH_FODMAP_INGREDIENTS = [
     "sorbitol", "wheat", "xylitol", "yogurt"
 ];
 
-// Memory state to hold onto camera keywords between keystrokes
 let detectedOcrKeywords = [];
 
 // Populate help area
@@ -228,33 +227,34 @@ function analyzeText(rawText) {
         }
     });
 
-    // Sort matching ingredients by where they appeared in physical text order
     matchesWithIndex.sort((a, b) => a.index - b.index);
-
-    // Filter to unique items in order, store to state
     detectedOcrKeywords = [...new Set(matchesWithIndex.map(item => item.name))];
 
-    // Update read-only UI component
     if (detectedOcrKeywords.length > 0) {
         ocrKeywordsDiv.textContent = detectedOcrKeywords.join(", ");
     } else {
         ocrKeywordsDiv.textContent = "None";
     }
     
-    // Calculate compound score and show results panel
     calculateCombinedScore();
     resultsDiv.style.display = 'flex';
 }
 
 function calculateCombinedScore() {
-    // 1. Process user typed entries
-    const manualItems = userInput.value
+    // 1. Process user typed entries and filter down to high-FODMAP triggers only
+    const validManualItems = userInput.value
+        .split(",")
+        .map(item => item.trim().toLowerCase())
+        .filter(item => item.length > 0 && HIGH_FODMAP_INGREDIENTS.includes(item));
+
+const mi= userInput.value
         .split(",")
         .map(item => item.trim().toLowerCase())
         .filter(item => item.length > 0);
+console.log(mi);
 
-    // 2. Blend OCR matches array and User entries array together cleanly
-    const combinedSet = new Set([...detectedOcrKeywords, ...manualItems]);
+    // 2. Blend OCR matches array and the filtered user entries together
+    const combinedSet = new Set([...detectedOcrKeywords, ...validManualItems]);
     const totalCount = combinedSet.size;
 
     // 3. Render visual score
@@ -267,7 +267,6 @@ function calculateCombinedScore() {
     }
 }
 
-// Watch user text mutations for immediate real-time calculations
 userInput.addEventListener('input', calculateCombinedScore);
 </script>
 
