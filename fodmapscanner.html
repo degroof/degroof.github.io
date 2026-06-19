@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FODMAP Ingredient Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #333333;
+            --primary: #0076ff;
+            --danger: #ff3b30;
+            --warning: #ff9500;
+            --success: #34c759;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+        h1 { font-size: 1.5rem; margin-top: 0; text-align: center; }
+        .camera-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        /* Hidden file input, triggered by a styled button */
+        #camera-input { display: none; }
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        #preview {
+            width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 6px;
+            display: none;
+            background: #eee;
+        }
+        .status {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            min-height: 20px;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            border: 1px solid #eee;
+        }
+        .flagged-item {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        .score-safe { color: var(--success); font-weight: bold; }
+        .score-warn { color: var(--warning); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FODMAP Scanner</h1>
+    
+    <div class="camera-section">
+        <label for="camera-input" class="btn">Snap Ingredients List</label>
+        <input type="file" id="camera-input" accept="image/*" capture="environment">
+        <img id="preview" alt="Image preview">
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="results" class="result-box" style="display: none;">
+        <h3>Analysis Results</h3>
+        <p id="fodmap-score"></p>
+        <div id="detected-flags"></div>
+        <hr>
+        <h4>Extracted Text:</h4>
+        <p id="raw-text" style="font-size: 0.85rem; color: #555; white-space: pre-wrap;"></p>
+    </div>
+</div>
+
+<script>
+// A basic lookup dictionary of high-FODMAP triggers
+const HIGH_FODMAP_INGREDIENTS = [
+    "fructose", "high fructose corn syrup", "honey", "agave",
+    "lactose", "milk", "cream", "ice cream", "yogurt",
+    "sorbitol", "mannitol", "xylitol", "maltitol", "isomalt",
+    "onion", "garlic", "shallot", "leek",
+    "wheat", "rye", "barley", "inulin", "chicory root"
+];
+
+const cameraInput = document.getElementById('camera-input');
+const preview = document.getElementById('preview');
+const statusDiv = document.getElementById('status');
+const resultsDiv = document.getElementById('results');
+const rawTextP = document.getElementById('raw-text');
+const scoreP = document.getElementById('fodmap-score');
+const flagsDiv = document.getElementById('detected-flags');
+
+cameraInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show preview
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    resultsDiv.style.display = 'none';
+    
+    processImage(file);
+});
+
+async function processImage(file) {
+    statusDiv.textContent = "Initializing OCR engine...";
+    
+    try {
+        // Tesseract automatically initializes workers
+        const worker = await Tesseract.createWorker('eng');
+        
+        statusDiv.textContent = "Reading ingredients list...";
+        const ret = await worker.recognize(file);
+        const text = ret.data.text;
+        
+        await worker.terminate();
+        
+        statusDiv.textContent = "";
+        displayResults(text);
+    } catch (error) {
+        console.error(error);
+        statusDiv.textContent = "Error scanning image. Try again.";
+    }
+}
+
+function displayResults(text) {
+    rawTextP.textContent = text;
+    
+    // Normalize text for matching (lowercase, strip weird spaces)
+    const normalizedText = text.toLowerCase();
+    
+    // Find matches
+    let foundTriggers = [];
+    HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
+        if (normalizedText.includes(ingredient)) {
+            foundTriggers.push(ingredient);
+        }
+    });
+
+    // Simple Scoring Rules
+    resultsDiv.style.display = 'block';
+    flagsDiv.innerHTML = "";
+    
+    if (foundTriggers.length === 0) {
+        scoreP.innerHTML = "Score: <span class='score-safe'>Likely Low FODMAP</span>";
+        flagsDiv.innerHTML = "<p>No common high-FODMAP ingredients detected.</p>";
+    } else {
+        scoreP.innerHTML = `Score: <span class='score-warn'>High FODMAP Triggers Found (${foundTriggers.length})</span>`;
+        
+        let listHtml = "<ul>";
+        foundTriggers.forEach(item => {
+            listHtml += `<li>Flagged: <span class="flagged-item">${item}</span></li>`;
+        });
+        listHtml += "</ul>";
+        flagsDiv.innerHTML = listHtml;
+    }
+}
+</script>
+
+</body>
+</html>
