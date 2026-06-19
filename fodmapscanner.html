@@ -242,7 +242,6 @@ function analyzeText(rawText) {
 }
 
 function calculateCombinedScore() {
-    // 1. Process user typed entries and filter down to high-FODMAP triggers only
     const validManualItems = userInput.value
         .split(",")
         .map(item => item.trim().toLowerCase())
@@ -254,11 +253,9 @@ const mi= userInput.value
         .filter(item => item.length > 0);
 console.log(mi);
 
-    // 2. Blend OCR matches array and the filtered user entries together
     const combinedSet = new Set([...detectedOcrKeywords, ...validManualItems]);
     const totalCount = combinedSet.size;
 
-    // 3. Render visual score
     if (totalCount === 0) {
         scoreZone.className = "score-display score-safe";
         scoreZone.textContent = "Likely Low FODMAP";
