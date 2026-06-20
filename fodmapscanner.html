@@ -160,14 +160,10 @@
             <label>Detected via Scan:</label>
             <div id="ocr-keywords" class="ocr-output-box">None</div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="user-input">Manually Add/Correct Ingredients:</label>
-            <textarea id="user-input" placeholder="e.g. garlic, honey, inulin"></textarea>
-        </div>
     </div>
 
     <details>
-        <summary>Raw Text</summary>
+        <summary>Raw Text (paste or edit text if necessary)</summary>
         <textarea id="ocr-text" placeholder="(raw text from scan)"></textarea>
     </details>
 	
@@ -201,7 +197,6 @@ const cameraInput = document.getElementById('camera-input');
 const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
 const ocrKeywordsDiv = document.getElementById('ocr-keywords');
-const userInput = document.getElementById('user-input');
 const scoreZone = document.getElementById('score-zone');
 const ocrText = document.getElementById('ocr-text');
 
@@ -370,18 +365,13 @@ function analyzeText(rawText) {
         ocrKeywordsDiv.textContent = "None";
     }
     
-    calculateCombinedScore();
+    calculateScore();
     resultsDiv.style.display = 'flex';
 }
 
-function calculateCombinedScore() {
-    const validManualItems = userInput.value
-        .split(",")
-        .map(item => item.trim().toLowerCase())
-        .filter(item => item.length > 0 && HIGH_FODMAP_INGREDIENTS.includes(item));
-
-    const combinedSet = new Set([...detectedOcrKeywords, ...validManualItems]);
-    const totalCount = combinedSet.size;
+function calculateScore() {
+    const scoredSet = new Set([...detectedOcrKeywords);
+    const totalCount = scoredSet.size;
 
     if (totalCount === 0) {
         scoreZone.className = "score-display score-safe";
