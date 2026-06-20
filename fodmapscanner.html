@@ -370,8 +370,7 @@ function analyzeText(rawText) {
 }
 
 function calculateScore() {
-    const scoredSet = new Set([...detectedOcrKeywords);
-    const totalCount = scoredSet.size;
+    const totalCount = detectedOcrKeywords.length;
 
     if (totalCount === 0) {
         scoreZone.className = "score-display score-safe";
@@ -382,7 +381,6 @@ function calculateScore() {
     }
 }
 
-userInput.addEventListener('input', calculateCombinedScore);
 ocrText.addEventListener('input', recalc);
 </script>
 
