@@ -56,13 +56,23 @@
             cursor: pointer;
             text-align: center;
         }
-        #preview {
+        .btn-secondary {
+            background-color: #5856d6;
+        }
+        /* Canvas box wrapper for selection */
+        .canvas-container {
             width: 100%;
-            max-height: 200px;
-            object-fit: contain;
-            border-radius: 6px;
+            position: relative;
             display: none;
+            overflow: hidden;
+            border-radius: 6px;
             background: #eee;
+            touch-action: none; /* Prevents mobile scrolling while drawing a selection box */
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
         }
         .status {
             font-style: italic;
@@ -109,7 +119,6 @@
             font-size: 0.95rem;
             resize: vertical;
         }
-
         details {
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -132,28 +141,36 @@
     <h1>FODMAP Scanner</h1>
     
     <div class="camera-section">
-        <label for="camera-input" class="btn">Snap Ingredients List</label>
+        <label for="camera-input" class="btn">Snap Photo</label>
         <input type="file" id="camera-input" accept="image/*" capture="environment">
-        <img id="preview" alt="Image preview">
+        
+        <div id="canvas-wrapper" class="canvas-container">
+            <canvas id="crop-canvas"></canvas>
+        </div>
+        
+        <button id="scan-btn" class="btn btn-secondary" style="display: none;">Scan Selected Area</button>
     </div>
 
-    <div id="status" class="status"></div>
+	
+    <div id="status" class="status">Instructions: Snap a photo, then drag your finger over the text to select it.</div>
 
     <div id="results" class="result-box">
         <div id="score-zone" class="score-display"></div>
-        
         <div style="display: flex; flex-direction: column; gap: 6px;">
             <label>Detected via Scan:</label>
             <div id="ocr-keywords" class="ocr-output-box">None</div>
         </div>
-
         <div style="display: flex; flex-direction: column; gap: 6px;">
             <label for="user-input">Manually Add/Correct Ingredients:</label>
             <textarea id="user-input" placeholder="e.g. garlic, honey, inulin"></textarea>
-            <span style="font-size: 0.8rem; color: #666; margin-top: -3px;">💡 Type extra ingredients separated by commas. Low FODMAP items will be ignored.</span>
         </div>
     </div>
 
+    <details>
+        <summary>Raw Text</summary>
+        <textarea id="ocr-text" placeholder="(raw text from scan)"></textarea>
+    </details>
+	
     <details>
         <summary>Supported Keywords Lookup</summary>
         <ul id="help-list" class="help-list"></ul>
@@ -162,15 +179,34 @@
 
 <script>
 const HIGH_FODMAP_INGREDIENTS = [
-    "agave", "barley", "chicory", "cream", "fructose", "garlic", "honey",
-    "inulin", "isomalt", "lactose", "leek", "maltitol", 
-    "mannitol", "milk", "onion", "rye", "shallot", 
-    "sorbitol", "wheat", "xylitol", "yogurt", "mushroom", "mushrooms", "lima", 
-	"kidney", "onions", "peas", "apple", "apples", "avocado", "bananas", "banana", 
-	"raisin", "raisins", "cashew", "cashews", "pistachio", "pistachios"	
+	"agave", "apple", "apricot", "artichoke", "asparagus", "avocado", "banana", 
+	"barley", "blackberries", "blackberry", "boysenberries", "boysenberry", "cashew", 
+	"cauliflower", "cherries", "cherry", "chicory", "cream", "date", "fig", 
+	"fructose", "garlic", "grapefruit", "honey", "ice cream", "inulin", "isomalt", 
+	"kidney bean", "lactose", "leek", "lentil", "lima bean", "maltitol", "mango", 
+	"mannitol", "milk", "mushroom", "nectarine", "onion", "peaches", "pear", "peas", 
+	"pistachio	", "plums", "prune", "raisin", "rye", "shallot", "shallots", 
+	"sorbitol", "soybeans", "watermelon", "wheat", "xylitol", "yogurt"
 ];
 
 let detectedOcrKeywords = [];
+let originalImage = new Image();
+
+// Canvas coordination state
+const canvas = document.getElementById('crop-canvas');
+const ctx = canvas.getContext('2d');
+const canvasWrapper = document.getElementById('canvas-wrapper');
+const scanBtn = document.getElementById('scan-btn');
+const cameraInput = document.getElementById('camera-input');
+const statusDiv = document.getElementById('status');
+const resultsDiv = document.getElementById('results');
+const ocrKeywordsDiv = document.getElementById('ocr-keywords');
+const userInput = document.getElementById('user-input');
+const scoreZone = document.getElementById('score-zone');
+const ocrText = document.getElementById('ocr-text');
+
+let isDrawing = false;
+let startX, startY, currentX, currentY;
 
 // Populate help area
 const helpList = document.getElementById('help-list');
@@ -180,40 +216,137 @@ HIGH_FODMAP_INGREDIENTS.forEach(item => {
     helpList.appendChild(li);
 });
 
-const cameraInput = document.getElementById('camera-input');
-const preview = document.getElementById('preview');
-const statusDiv = document.getElementById('status');
-const resultsDiv = document.getElementById('results');
-const ocrKeywordsDiv = document.getElementById('ocr-keywords');
-const userInput = document.getElementById('user-input');
-const scoreZone = document.getElementById('score-zone');
-
+// Capture photo and draw it to canvas
 cameraInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = 'block';
     resultsDiv.style.display = 'none';
+    statusDiv.textContent = "Loading image... Drag a box over ingredients.";
     
-    processImage(file);
+    originalImage.src = URL.createObjectURL(file);
+    originalImage.onload = function() {
+        // Size canvas to native size of target image
+        canvas.width = originalImage.width;
+        canvas.height = originalImage.height;
+        
+        // Reset selection coordinate memory
+        startX = startY = currentX = currentY = 0;
+        
+        drawCanvas();
+        canvasWrapper.style.display = 'block';
+        scanBtn.style.display = 'block';
+    };
 });
 
-async function processImage(file) {
+function drawCanvas() {
+    // 1. Draw base photo
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(originalImage, 0, 0);
+
+    // 2. Draw selection overlay bounding rectangle if one exists
+    if (startX !== currentX || startY !== currentY) {
+        ctx.strokeStyle = '#0076ff';
+        ctx.lineWidth = Math.max(canvas.width / 200, 4); // Scale line thickness dynamically with high-res photos
+        ctx.fillStyle = 'rgba(0, 118, 255, 0.15)';
+        
+        const w = currentX - startX;
+        const h = currentY - startY;
+        
+        ctx.fillRect(startX, startY, w, h);
+        ctx.strokeRect(startX, startY, w, h);
+    }
+}
+
+// Convert screen touch space coordinates to internal native canvas pixel map coordinates
+function getCanvasCoordinates(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Scale tracking matrix to match visual element display constraints
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+function startSelection(e) {
+    isDrawing = true;
+    const coords = getCanvasCoordinates(e);
+    startX = coords.x;
+    startY = coords.y;
+    currentX = coords.x;
+    currentY = coords.y;
+}
+
+function moveSelection(e) {
+    if (!isDrawing) return;
+    const coords = getCanvasCoordinates(e);
+    currentX = coords.x;
+    currentY = coords.y;
+    drawCanvas();
+}
+
+function endSelection() {
+    isDrawing = false;
+}
+
+// Mouse event monitors
+canvas.addEventListener('mousedown', startSelection);
+canvas.addEventListener('mousemove', moveSelection);
+window.addEventListener('mouseup', endSelection);
+
+// Touch event monitors for mobile
+canvas.addEventListener('touchstart', startSelection);
+canvas.addEventListener('touchmove', moveSelection);
+window.addEventListener('touchend', endSelection);
+
+// Crop the active selection area out and pass it to Tesseract
+scanBtn.addEventListener('click', async function() {
+    // Default back to entire image bounds if user didn't draw a customized crop zone box
+    let x = Math.min(startX, currentX);
+    let y = Math.min(startY, currentY);
+    let w = Math.abs(currentX - startX);
+    let h = Math.abs(currentY - startY);
+
+    if (w < 10 || h < 10) {
+        x = 0; y = 0; w = canvas.width; h = canvas.height;
+    }
+
+    // Create a temporary staging canvas to extract the crop bounding context
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = w;
+    cropCanvas.height = h;
+    const cropCtx = cropCanvas.getContext('2d');
+    
+    cropCtx.drawImage(canvas, x, y, w, h, 0, 0, w, h);
+    const croppedDataUrl = cropCanvas.toDataURL();
+
     statusDiv.textContent = "Initializing OCR engine...";
+    scanBtn.disabled = true;
+
     try {
         const worker = await Tesseract.createWorker('eng');
-        statusDiv.textContent = "Analyzing package text...";
-        const ret = await worker.recognize(file);
+        statusDiv.textContent = "Analyzing selected text block...";
+        const ret = await worker.recognize(croppedDataUrl);
         const text = ret.data.text;
         await worker.terminate();
         
-        statusDiv.textContent = "";
+        statusDiv.textContent = "Done. Adjust selection or view rules down below.";
+        scanBtn.disabled = false;
+		ocrText.value=text;		
         analyzeText(text);
     } catch (error) {
         console.error(error);
-        statusDiv.textContent = "Error scanning image. Try again.";
+        statusDiv.textContent = "OCR processing failed. Try adjusting crop box bounds.";
+        scanBtn.disabled = false;
     }
+});
+
+function recalc()
+{
+	analyzeText(ocrText.value);
 }
 
 function analyzeText(rawText) {
@@ -260,7 +393,8 @@ function calculateCombinedScore() {
 }
 
 userInput.addEventListener('input', calculateCombinedScore);
+ocrText.addEventListener('input', recalc);
 </script>
 
 </body>
-</html>
+</html> 
