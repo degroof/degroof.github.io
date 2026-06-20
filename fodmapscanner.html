@@ -67,7 +67,7 @@
             overflow: hidden;
             border-radius: 6px;
             background: #eee;
-            touch-action: none; /* Prevents mobile scrolling while drawing a selection box */
+            touch-action: none; 
         }
         canvas {
             display: block;
@@ -187,8 +187,7 @@ const HIGH_FODMAP_INGREDIENTS = [
 
 let detectedOcrKeywords = [];
 let originalImage = new Image();
-
-// Canvas coordination state
+//image canvas
 const canvas = document.getElementById('crop-canvas');
 const ctx = canvas.getContext('2d');
 const canvasWrapper = document.getElementById('canvas-wrapper');
@@ -198,6 +197,7 @@ const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
 const ocrKeywordsDiv = document.getElementById('ocr-keywords');
 const scoreZone = document.getElementById('score-zone');
+//text area with raw OCR text
 const ocrText = document.getElementById('ocr-text');
 
 let isDrawing = false;
@@ -235,11 +235,11 @@ cameraInput.addEventListener('change', function(e) {
 });
 
 function drawCanvas() {
-    // 1. Draw base photo
+    //place picture
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(originalImage, 0, 0);
 
-    // 2. Draw selection overlay bounding rectangle if one exists
+    //draw selection area
     if (startX !== currentX || startY !== currentY) {
         ctx.strokeStyle = '#0076ff';
         ctx.lineWidth = Math.max(canvas.width / 200, 4); // Scale line thickness dynamically with high-res photos
@@ -253,19 +253,19 @@ function drawCanvas() {
     }
 }
 
-// Convert screen touch space coordinates to internal native canvas pixel map coordinates
+//caculate canvas coordinates
 function getCanvasCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     
-    // Scale tracking matrix to match visual element display constraints
     return {
         x: (clientX - rect.left) * (canvas.width / rect.width),
         y: (clientY - rect.top) * (canvas.height / rect.height)
     };
 }
 
+//start selection box
 function startSelection(e) {
     isDrawing = true;
     const coords = getCanvasCoordinates(e);
@@ -275,6 +275,7 @@ function startSelection(e) {
     currentY = coords.y;
 }
 
+//drag selection
 function moveSelection(e) {
     if (!isDrawing) return;
     const coords = getCanvasCoordinates(e);
@@ -283,21 +284,22 @@ function moveSelection(e) {
     drawCanvas();
 }
 
+//finish selection
 function endSelection() {
     isDrawing = false;
 }
 
-// Mouse event monitors
+//mouse event monitors
 canvas.addEventListener('mousedown', startSelection);
 canvas.addEventListener('mousemove', moveSelection);
 window.addEventListener('mouseup', endSelection);
 
-// Touch event monitors for mobile
+//mobile event monitors
 canvas.addEventListener('touchstart', startSelection);
 canvas.addEventListener('touchmove', moveSelection);
 window.addEventListener('touchend', endSelection);
 
-// Crop the active selection area out and pass it to Tesseract
+//crop selection area and pass it to Tesseract
 scanBtn.addEventListener('click', async function() {
     // Default back to entire image bounds if user didn't draw a customized crop zone box
     let x = Math.min(startX, currentX);
@@ -309,7 +311,7 @@ scanBtn.addEventListener('click', async function() {
         x = 0; y = 0; w = canvas.width; h = canvas.height;
     }
 
-    // Create a temporary staging canvas to extract the crop bounding context
+    //create a temp canvas to extract the cropped context
     const cropCanvas = document.createElement('canvas');
     cropCanvas.width = w;
     cropCanvas.height = h;
@@ -339,24 +341,28 @@ scanBtn.addEventListener('click', async function() {
     }
 });
 
+//recalculate score if raw text is changed by user
 function recalc()
 {
 	analyzeText(ocrText.value);
 }
 
+//look for keywords
 function analyzeText(rawText) {
     const normalizedText = rawText.toLowerCase();
-    let matchesWithIndex = [];
+    let matchesWithIndex = []; //ingredient/index pairs
 
     HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
-        let index = normalizedText.indexOf(ingredient);
+        let index = normalizedText.indexOf(ingredient); //location of keyword within ingredients
         while (index !== -1) {
             matchesWithIndex.push({ name: ingredient, index: index });
             index = normalizedText.indexOf(ingredient, index + 1);
         }
     });
 
+	//sort by location within incredients
     matchesWithIndex.sort((a, b) => a.index - b.index);
+	//extract list of keywords
     detectedOcrKeywords = [...new Set(matchesWithIndex.map(item => item.name))];
 
     if (detectedOcrKeywords.length > 0) {
@@ -369,6 +375,7 @@ function analyzeText(rawText) {
     resultsDiv.style.display = 'flex';
 }
 
+//set score
 function calculateScore() {
     const totalCount = detectedOcrKeywords.length;
 
@@ -381,6 +388,7 @@ function calculateScore() {
     }
 }
 
+//recalc on user change to raw text
 ocrText.addEventListener('input', recalc);
 </script>
 
