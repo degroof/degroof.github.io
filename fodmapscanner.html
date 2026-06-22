@@ -11,9 +11,9 @@
             --card: #ffffff;
             --text: #333333;
             --primary: #0076ff;
-            --danger: #ff3b30;
-            --warning: #ff9500;
-            --success: #34c759;
+            --danger: #ff3030;
+            --warning: #ff8000;
+            --success: #30ff30;
             --border: #e5e5ea;
         }
         body {
@@ -95,9 +95,10 @@
             border-radius: 6px;
             text-align: center;
         }
-        .score-safe { background: #e8f5e9; color: var(--success); font-weight: bold; }
-        .score-warn { background: #ffebee; color: var(--danger); font-weight: bold; }
-        
+        .score-safe { background: var(--success); color: #000000; font-weight: bold; }
+        .score-warn-med { background: var(--warning); color: #000000; font-weight: bold; }
+        .score-warn { background: var(--danger); color: #000000; font-weight: bold; }
+
         label { font-weight: bold; font-size: 0.9rem; color: #555; }
         .ocr-output-box {
             background: #fff;
@@ -126,13 +127,7 @@
             background: #fafafa;
         }
         summary { font-weight: bold; cursor: pointer; outline: none; }
-        .help-list {
-            margin-top: 10px;
-            padding-left: 20px;
-            font-size: 0.9rem;
-            column-count: 2;
-            color: #444;
-        }
+
     </style>
 </head>
 <body>
@@ -157,8 +152,12 @@
     <div id="results" class="result-box">
         <div id="score-zone" class="score-display"></div>
         <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label>Detected via Scan:</label>
+            <label>High FODMAP:</label>
             <div id="ocr-keywords" class="ocr-output-box">None</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label>Lower Risk:</label>
+            <div id="ocr-keywords-med" class="ocr-output-box">None</div>
         </div>
     </div>
 
@@ -166,230 +165,253 @@
         <summary>Raw Text (paste or edit text if necessary)</summary>
         <textarea id="ocr-text" placeholder="(raw text from scan)"></textarea>
     </details>
-	
-    <details>
-        <summary>Supported Keywords Lookup</summary>
-        <ul id="help-list" class="help-list"></ul>
-    </details>
+
 </div>
 
 <script>
-const HIGH_FODMAP_INGREDIENTS = [
-	"agave", "apple", "apricot", "artichoke", "asparagus", "avocado", "banana", 
-	"barley", "blackberries", "blackberry", "boysenberries", "boysenberry", "cashew", 
-	"cauliflower", "cherries", "cherry", "chick pea", "chickpea", "chicory", "cream", "date", "erythritol", "fig", 
-	"fructose", "garlic", "grapefruit", "honey", "ice cream", "inulin", "isomalt", 
-	"kidney bean", "lactose", "leek", "lentil", "lima bean", "maltitol", "mango", 
-	"mannitol", "milk", "mushroom", "nectarine", "onion", "peaches", "pear", "peas", 
-	"pistachio	", "plums", "prune", "raisin", "rye", "shallot", "shallots", 
-	"sorbitol", "soybeans", "watermelon", "wheat", "xylitol", "yogurt"
-];
+    const HIGH_FODMAP_INGREDIENTS = [
+        "agave", "apple", "apricot", "artichoke", "asparagus", "banana",
+        "barley", "blackberries", "blackberry", "boysenberries", "boysenberry", "cashew",
+        "cauliflower", "cherries", "cherry", "chick pea", "chickpea", "chicory", "cream", "date", "erythritol", "fig",
+        "fructose", "garlic", "grapefruit", "honey", "ice cream", "inulin", "isomalt",
+        "kidney bean", "lactose", "leek", "lentil", "lima bean", "maltitol", "mango",
+        "mannitol", "milk", "nectarine", "onion", "peaches", "pear",
+        "pistachio	", "plums", "prune", "raisin", "rye", "shallot", "shallots",
+        "sorbitol", "soybeans", "watermelon", "wheat", "xylitol", "yogurt", "ricotta",
+        "ketchup"
+    ];
 
-let detectedOcrKeywords = [];
-let originalImage = new Image();
-//image canvas
-const canvas = document.getElementById('crop-canvas');
-const ctx = canvas.getContext('2d');
-const canvasWrapper = document.getElementById('canvas-wrapper');
-const scanBtn = document.getElementById('scan-btn');
-const cameraInput = document.getElementById('camera-input');
-const statusDiv = document.getElementById('status');
-const resultsDiv = document.getElementById('results');
-const ocrKeywordsDiv = document.getElementById('ocr-keywords');
-const scoreZone = document.getElementById('score-zone');
-//text area with raw OCR text
-const ocrText = document.getElementById('ocr-text');
+    const MEDIUM_FODMAP_INGREDIENTS = [
+        "avocado", "brussels sprouts", "celery", "peas", "mushroom", "grapes", "sweet potato", "kefir",
+    ];
 
-let isDrawing = false;
-let startX, startY, currentX, currentY;
+    let detectedOcrKeywords = [];
+    let detectedOcrKeywordsMedium = [];
+    let originalImage = new Image();
+    //image canvas
+    const canvas = document.getElementById('crop-canvas');
+    const ctx = canvas.getContext('2d');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const scanBtn = document.getElementById('scan-btn');
+    const cameraInput = document.getElementById('camera-input');
+    const statusDiv = document.getElementById('status');
+    const resultsDiv = document.getElementById('results');
+    const ocrKeywordsDiv = document.getElementById('ocr-keywords');
+    const ocrKeywordsDivMed = document.getElementById('ocr-keywords-med');
+    const scoreZone = document.getElementById('score-zone');
+    //text area with raw OCR text
+    const ocrText = document.getElementById('ocr-text');
 
-// Populate help area
-const helpList = document.getElementById('help-list');
-HIGH_FODMAP_INGREDIENTS.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item;
-    helpList.appendChild(li);
-});
+    let isDrawing = false; //true when dragging selection box
+    let startX, startY, currentX, currentY; //coordinates for selection box
 
-// Capture photo and draw it to canvas
-cameraInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    // Capture photo and draw it to canvas
+    cameraInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    resultsDiv.style.display = 'none';
-    statusDiv.textContent = "Loading image... Drag a box over ingredients.";
-    
-    originalImage.src = URL.createObjectURL(file);
-    originalImage.onload = function() {
-        // Size canvas to native size of target image
-        canvas.width = originalImage.width;
-        canvas.height = originalImage.height;
-        
-        // Reset selection coordinate memory
-        startX = startY = currentX = currentY = 0;
-        
+        resultsDiv.style.display = 'none';
+        statusDiv.textContent = "Loading image... Drag a box over ingredients.";
+
+        originalImage.src = URL.createObjectURL(file);
+        originalImage.onload = function() {
+            // Size canvas to native size of target image
+            canvas.width = originalImage.width;
+            canvas.height = originalImage.height;
+
+            // Reset selection coordinate memory
+            startX = startY = currentX = currentY = 0;
+
+            drawCanvas();
+            canvasWrapper.style.display = 'block';
+            scanBtn.style.display = 'block';
+        };
+    });
+
+    function drawCanvas() {
+        //place picture
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(originalImage, 0, 0);
+
+        //draw selection area
+        if (startX !== currentX || startY !== currentY) {
+            ctx.strokeStyle = '#0076ff';
+            ctx.lineWidth = Math.max(canvas.width / 200, 4); // Scale line thickness dynamically with high-res photos
+            ctx.fillStyle = 'rgba(0, 118, 255, 0.15)';
+
+            const w = currentX - startX;
+            const h = currentY - startY;
+
+            ctx.fillRect(startX, startY, w, h);
+            ctx.strokeRect(startX, startY, w, h);
+        }
+    }
+
+    //calculate canvas coordinates
+    function getCanvasCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    //start selection box
+    function startSelection(e) {
+        isDrawing = true;
+        const coords = getCanvasCoordinates(e);
+        startX = coords.x;
+        startY = coords.y;
+        currentX = coords.x;
+        currentY = coords.y;
+    }
+
+    //drag selection
+    function moveSelection(e) {
+        if (!isDrawing) return;
+        const coords = getCanvasCoordinates(e);
+        currentX = coords.x;
+        currentY = coords.y;
         drawCanvas();
-        canvasWrapper.style.display = 'block';
-        scanBtn.style.display = 'block';
-    };
-});
-
-function drawCanvas() {
-    //place picture
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(originalImage, 0, 0);
-
-    //draw selection area
-    if (startX !== currentX || startY !== currentY) {
-        ctx.strokeStyle = '#0076ff';
-        ctx.lineWidth = Math.max(canvas.width / 200, 4); // Scale line thickness dynamically with high-res photos
-        ctx.fillStyle = 'rgba(0, 118, 255, 0.15)';
-        
-        const w = currentX - startX;
-        const h = currentY - startY;
-        
-        ctx.fillRect(startX, startY, w, h);
-        ctx.strokeRect(startX, startY, w, h);
-    }
-}
-
-//caculate canvas coordinates
-function getCanvasCoordinates(e) {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
-    };
-}
-
-//start selection box
-function startSelection(e) {
-    isDrawing = true;
-    const coords = getCanvasCoordinates(e);
-    startX = coords.x;
-    startY = coords.y;
-    currentX = coords.x;
-    currentY = coords.y;
-}
-
-//drag selection
-function moveSelection(e) {
-    if (!isDrawing) return;
-    const coords = getCanvasCoordinates(e);
-    currentX = coords.x;
-    currentY = coords.y;
-    drawCanvas();
-}
-
-//finish selection
-function endSelection() {
-    isDrawing = false;
-}
-
-//mouse event monitors
-canvas.addEventListener('mousedown', startSelection);
-canvas.addEventListener('mousemove', moveSelection);
-window.addEventListener('mouseup', endSelection);
-
-//mobile event monitors
-canvas.addEventListener('touchstart', startSelection);
-canvas.addEventListener('touchmove', moveSelection);
-window.addEventListener('touchend', endSelection);
-
-//crop selection area and pass it to Tesseract
-scanBtn.addEventListener('click', async function() {
-    // Default back to entire image bounds if user didn't draw a customized crop zone box
-    let x = Math.min(startX, currentX);
-    let y = Math.min(startY, currentY);
-    let w = Math.abs(currentX - startX);
-    let h = Math.abs(currentY - startY);
-
-    if (w < 10 || h < 10) {
-        x = 0; y = 0; w = canvas.width; h = canvas.height;
     }
 
-    //create a temp canvas to extract the cropped context
-    const cropCanvas = document.createElement('canvas');
-    cropCanvas.width = w;
-    cropCanvas.height = h;
-    const cropCtx = cropCanvas.getContext('2d');
-    
-    cropCtx.drawImage(canvas, x, y, w, h, 0, 0, w, h);
-    const croppedDataUrl = cropCanvas.toDataURL();
-
-    statusDiv.textContent = "Initializing OCR engine...";
-    scanBtn.disabled = true;
-
-    try {
-        const worker = await Tesseract.createWorker('eng');
-        statusDiv.textContent = "Analyzing selected text block...";
-        const ret = await worker.recognize(croppedDataUrl);
-        const text = ret.data.text;
-        await worker.terminate();
-        
-        statusDiv.textContent = "Done. Adjust selection or view rules down below.";
-        scanBtn.disabled = false;
-		ocrText.value=text;		
-        analyzeText(text);
-    } catch (error) {
-        console.error(error);
-        statusDiv.textContent = "OCR processing failed. Try adjusting crop box bounds.";
-        scanBtn.disabled = false;
+    //finish selection
+    function endSelection() {
+        isDrawing = false;
     }
-});
 
-//recalculate score if raw text is changed by user
-function recalc()
-{
-	analyzeText(ocrText.value);
-}
+    //mouse event monitors
+    canvas.addEventListener('mousedown', startSelection);
+    canvas.addEventListener('mousemove', moveSelection);
+    window.addEventListener('mouseup', endSelection);
 
-//look for keywords
-function analyzeText(rawText) {
-    const normalizedText = rawText.toLowerCase();
-    let matchesWithIndex = []; //ingredient/index pairs
+    //mobile event monitors
+    canvas.addEventListener('touchstart', startSelection);
+    canvas.addEventListener('touchmove', moveSelection);
+    window.addEventListener('touchend', endSelection);
 
-    HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
-        let index = normalizedText.indexOf(ingredient); //location of keyword within ingredients
-        while (index !== -1) {
-            matchesWithIndex.push({ name: ingredient, index: index });
-            index = normalizedText.indexOf(ingredient, index + 1);
+    //crop selection area and pass it to Tesseract
+    scanBtn.addEventListener('click', async function() {
+        // Default back to entire image bounds if user didn't draw a customized crop zone box
+        let x = Math.min(startX, currentX);
+        let y = Math.min(startY, currentY);
+        let w = Math.abs(currentX - startX);
+        let h = Math.abs(currentY - startY);
+
+        if (w < 10 || h < 10) {
+            x = 0; y = 0; w = canvas.width; h = canvas.height;
+        }
+
+        //create a temp canvas to extract the cropped context
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = w;
+        cropCanvas.height = h;
+        const cropCtx = cropCanvas.getContext('2d');
+
+        cropCtx.drawImage(canvas, x, y, w, h, 0, 0, w, h);
+        const croppedDataUrl = cropCanvas.toDataURL();
+
+        statusDiv.textContent = "Initializing OCR engine...";
+        scanBtn.disabled = true;
+
+        try {
+            const worker = await Tesseract.createWorker('eng');
+            statusDiv.textContent = "Analyzing selected text block...";
+            const ret = await worker.recognize(croppedDataUrl);
+            const text = ret.data.text;
+            await worker.terminate();
+
+            statusDiv.textContent = "Done. Adjust selection or view rules down below.";
+            scanBtn.disabled = false;
+            ocrText.value=text;
+            analyzeText(text);
+        } catch (error) {
+            console.error(error);
+            statusDiv.textContent = "OCR processing failed. Try adjusting crop box bounds.";
+            scanBtn.disabled = false;
         }
     });
 
-	//sort by location within incredients
-    matchesWithIndex.sort((a, b) => a.index - b.index);
-	//extract list of keywords
-    detectedOcrKeywords = [...new Set(matchesWithIndex.map(item => item.name))];
-
-    if (detectedOcrKeywords.length > 0) {
-        ocrKeywordsDiv.textContent = detectedOcrKeywords.join(", ");
-    } else {
-        ocrKeywordsDiv.textContent = "None";
+    //recalculate score if raw text is changed by user
+    function recalc()
+    {
+        analyzeText(ocrText.value);
     }
-    
-    calculateScore();
-    resultsDiv.style.display = 'flex';
-}
 
-//set score
-function calculateScore() {
-    const totalCount = detectedOcrKeywords.length;
+    //look for keywords
+    function analyzeText(rawText) {
+        const normalizedText = rawText.toLowerCase();
+        let matchesWithIndex = []; //ingredient/index pairs
 
-    if (totalCount === 0) {
-        scoreZone.className = "score-display score-safe";
-        scoreZone.textContent = "Likely Low FODMAP";
-    } else {
-        scoreZone.className = "score-display score-warn";
-        scoreZone.textContent = `High FODMAP Triggers Found (${totalCount})`;
+        HIGH_FODMAP_INGREDIENTS.forEach(ingredient => {
+            let index = normalizedText.indexOf(ingredient); //location of keyword within ingredients
+            while (index !== -1) {
+                matchesWithIndex.push({ name: ingredient, index: index });
+                index = normalizedText.indexOf(ingredient, index + 1);
+            }
+        });
+
+        //sort by location within ingredients
+        matchesWithIndex.sort((a, b) => a.index - b.index);
+        //extract list of keywords
+        detectedOcrKeywords = [...new Set(matchesWithIndex.map(item => item.name))];
+
+        //repeat for medium
+        matchesWithIndex = [];
+        MEDIUM_FODMAP_INGREDIENTS.forEach(ingredient => {
+            let index = normalizedText.indexOf(ingredient); //location of keyword within ingredients
+            while (index !== -1) {
+                matchesWithIndex.push({ name: ingredient, index: index });
+                index = normalizedText.indexOf(ingredient, index + 1);
+            }
+        });
+
+        //sort by location within ingredients
+        matchesWithIndex.sort((a, b) => a.index - b.index);
+        //extract list of keywords
+        detectedOcrKeywordsMedium = [...new Set(matchesWithIndex.map(item => item.name))];
+
+        if (detectedOcrKeywordsMedium.length > 0) {
+            ocrKeywordsDivMed.textContent = detectedOcrKeywordsMedium.join(", ");
+        } else {
+            ocrKeywordsDivMed.textContent = "None";
+        }
+
+        if (detectedOcrKeywords.length > 0) {
+            ocrKeywordsDiv.textContent = detectedOcrKeywords.join(", ");
+        } else {
+            ocrKeywordsDiv.textContent = "None";
+        }
+
+        calculateScore();
+        resultsDiv.style.display = 'flex';
     }
-}
 
-//recalc on user change to raw text
-ocrText.addEventListener('input', recalc);
+    //set score
+    function calculateScore() {
+        const totalCount = detectedOcrKeywords.length;
+        const totalCountMed = detectedOcrKeywordsMedium.length;
+
+        if (totalCount > 0) {
+            scoreZone.className = "score-display score-warn";
+            scoreZone.textContent = `High FODMAP Triggers Found (${totalCount})`;
+        }
+        else if (totalCountMed > 0) {
+            scoreZone.className = "score-display score-warn-med";
+            scoreZone.textContent = `Lower risk FODMAP Triggers Found (${totalCountMed})`;
+        }
+        else
+        {
+            scoreZone.className = "score-display score-safe";
+            scoreZone.textContent = "Likely Low FODMAP";
+        }
+    }
+
+    //recalc on user change to raw text
+    ocrText.addEventListener('input', recalc);
 </script>
 
 </body>
