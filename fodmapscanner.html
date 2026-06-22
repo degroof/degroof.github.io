@@ -136,18 +136,17 @@
     <h1>FODMAP Scanner</h1>
     
     <div class="camera-section">
-        <label for="camera-input" class="btn">Snap Photo</label>
+        <label for="camera-input" class="btn">Take Photo</label>
         <input type="file" id="camera-input" accept="image/*" capture="environment">
         
         <div id="canvas-wrapper" class="canvas-container">
             <canvas id="crop-canvas"></canvas>
         </div>
         
-        <button id="scan-btn" class="btn btn-secondary" style="display: none;">Scan Selected Area</button>
     </div>
 
 	
-    <div id="status" class="status">Instructions: Snap a photo, then drag your finger over the text to select it.</div>
+    <div id="status" class="status">Instructions: Take a photo, then drag a selection box over the text.</div>
 
     <div id="results" class="result-box">
         <div id="score-zone" class="score-display"></div>
@@ -161,7 +160,7 @@
         </div>
     </div>
 
-    <details>
+    <details id="rawText">
         <summary>Raw Text (paste or edit text if necessary)</summary>
         <textarea id="ocr-text" placeholder="(raw text from scan)"></textarea>
     </details>
@@ -192,7 +191,6 @@
     const canvas = document.getElementById('crop-canvas');
     const ctx = canvas.getContext('2d');
     const canvasWrapper = document.getElementById('canvas-wrapper');
-    const scanBtn = document.getElementById('scan-btn');
     const cameraInput = document.getElementById('camera-input');
     const statusDiv = document.getElementById('status');
     const resultsDiv = document.getElementById('results');
@@ -224,7 +222,6 @@
 
             drawCanvas();
             canvasWrapper.style.display = 'block';
-            scanBtn.style.display = 'block';
         };
     });
 
@@ -278,9 +275,13 @@
         drawCanvas();
     }
 
-    //finish selection
+    //finish selection and automatically kick off the OCR scan
     function endSelection() {
-        isDrawing = false;
+        // Only trigger if the user was actively dragging/drawing
+        if (isDrawing) {
+            isDrawing = false;
+            triggerScan();
+        }
     }
 
     //mouse event monitors
@@ -294,18 +295,18 @@
     window.addEventListener('touchend', endSelection);
 
     //crop selection area and pass it to Tesseract
-    scanBtn.addEventListener('click', async function() {
-        // Default back to entire image bounds if user didn't draw a customized crop zone box
+    async function triggerScan() {
         let x = Math.min(startX, currentX);
         let y = Math.min(startY, currentY);
         let w = Math.abs(currentX - startX);
         let h = Math.abs(currentY - startY);
 
+        // If the selection is too small (like a accidental tap), default to the whole image
         if (w < 10 || h < 10) {
             x = 0; y = 0; w = canvas.width; h = canvas.height;
         }
 
-        //create a temp canvas to extract the cropped context
+        // Create a temp canvas to extract the cropped context
         const cropCanvas = document.createElement('canvas');
         cropCanvas.width = w;
         cropCanvas.height = h;
@@ -315,7 +316,6 @@
         const croppedDataUrl = cropCanvas.toDataURL();
 
         statusDiv.textContent = "Initializing OCR engine...";
-        scanBtn.disabled = true;
 
         try {
             const worker = await Tesseract.createWorker('eng');
@@ -324,16 +324,14 @@
             const text = ret.data.text;
             await worker.terminate();
 
-            statusDiv.textContent = "Done. Adjust selection or view rules down below.";
-            scanBtn.disabled = false;
-            ocrText.value=text;
+            statusDiv.textContent = "Done. Adjust selection or edit the raw text as needed.";
+            ocrText.value = text;
             analyzeText(text);
         } catch (error) {
             console.error(error);
             statusDiv.textContent = "OCR processing failed. Try adjusting crop box bounds.";
-            scanBtn.disabled = false;
         }
-    });
+    }
 
     //recalculate score if raw text is changed by user
     function recalc()
