@@ -313,6 +313,51 @@
         const cropCtx = cropCanvas.getContext('2d');
 
         cropCtx.drawImage(canvas, x, y, w, h, 0, 0, w, h);
+
+        try {
+            const imgData = cropCtx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            //convert to high contrast
+            //get min/max grayscale values
+            let min=255;
+            let max=0;
+            let total=0;
+            let invert=false;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
+                max=Math.max(max,grayscale);
+                min=Math.min(min,grayscale);
+                total+=grayscale;
+            }
+            //calculate average grayscale value
+            avg=total/data.length*4
+            //if average is darker than midpoint, invert the image
+            invert=(avg<(min+max)/2);
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
+                let finalColor = Math.max(Math.min((grayscale-min) * 255 / (max-min),255),0);
+                if(invert) finalColor=255-finalColor;
+
+                data[i] = finalColor;     // Red
+                data[i + 1] = finalColor; // Green
+                data[i + 2] = finalColor; // Blue
+            }
+            cropCtx.putImageData(imgData, 0, 0);
+            //put the modified image data in the selection box
+            ctx.putImageData(imgData, x, y);
+        } catch (e) {
+            console.warn("Canvas pixel preprocessing failed (likely cross-origin issue):", e);
+        }
+
         const croppedDataUrl = cropCanvas.toDataURL();
 
         statusDiv.textContent = "Initializing OCR engine...";
@@ -321,15 +366,15 @@
             const worker = await Tesseract.createWorker('eng');
             statusDiv.textContent = "Analyzing selected text block...";
             const ret = await worker.recognize(croppedDataUrl);
-            const text = ret.data.text;
+            const text = ret.data.text.replaceAll("\n"," "); //get rid of newlines
             await worker.terminate();
 
-            statusDiv.textContent = "Done. Adjust selection or edit the raw text as needed.";
+            statusDiv.textContent = "Done. Redo selection or edit the raw text as needed.";
             ocrText.value = text;
             analyzeText(text);
         } catch (error) {
             console.error(error);
-            statusDiv.textContent = "OCR processing failed. Try adjusting crop box bounds.";
+            statusDiv.textContent = "OCR processing failed. Try redoing selection box.";
         }
     }
 
