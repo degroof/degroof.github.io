@@ -958,6 +958,25 @@ function handleShare() {
         emojis+=emoji;
         if(i%5==4) emojis+="\n";
     }
+    if(wordsFound==6)
+    {
+        let expected="";
+        for(let i=0;i<6;i++)
+        {
+            expected+=gameData[i];
+        }
+        let entered="";
+        for(let wordInd of WORD_SQUARES)
+        {
+            let word="";
+            for(let i=0;i<5;i++) //assemble the word
+            {
+                word+=gameData[6][boardState[wordInd[i]]];
+            }
+            entered+=word;
+        }
+        if(expected!=entered) emojis+="(alternate solution)\n";
+    }
     let url="https://degroof.github.io/fivebyfive.html";
     const shareText = `#FiveByFive - Game #${gameNumber}\n${emojis}Words Found: ${wordsFound}\nMoves: ${moves}\nHints: ${hints}\nTime: ${formatSeconds(elapsed)}\n${url}`;
 
