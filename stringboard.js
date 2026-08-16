@@ -43,6 +43,26 @@ function worldToScreen(worldX, worldY) {
   };
 }
 
+function noteInner(hexColor,noteId,title)
+{ 
+console.log(hexColor);
+console.log(noteId);
+console.log(title);
+return  `
+    <div class="note-actions">
+      <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
+      <button class="delete-btn" title="Delete Note">&times;</button>
+      <button class="duplicate-btn" title="Duplicate Note">+</button>
+    </div>
+
+    <div class="pin" data-note-id="${noteId}" title="Click to connect string"></div>
+
+    <div class="note-text" title="Double-click to edit">${title}</div>
+  `; 
+}
+
+
+
 
 function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 200, worldY = 200 }) {
   const noteId = `note_${++noteIdCounter}`;
@@ -54,18 +74,7 @@ function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 20
   note.style.backgroundColor = color;
   const hexColor=color.trim().startsWith("rgb")?rgbToHex(color):color;
 
-  note.innerHTML = `
-
-    <div class="note-actions">
-      <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
-      <button class="delete-btn" title="Delete Note">&times;</button>
-      <button class="duplicate-btn" title="Duplicate Note">+</button>
-    </div>
-
-    <div class="pin" data-note-id="${noteId}" title="Click to connect string"></div>
-
-    <div class="note-text" title="Double-click to edit">${title}</div>
-  `;
+  note.innerHTML = noteInner(hexColor,noteId,title);
 
   nodesLayer.appendChild(note);
 
@@ -86,6 +95,9 @@ function attachNoteEditListeners(note) {
     const currentText = titleEl.innerText;
     const input = document.createElement('textarea');
     input.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+    input.addEventListener('touchstart', (e) => {
       e.stopPropagation();
     });
     input.className = 'title-input';
@@ -119,8 +131,10 @@ function attachNoteEditListeners(note) {
   });
   
   colorPicker.addEventListener('mousedown', (e) => e.stopPropagation());
+  colorPicker.addEventListener('touchstart', (e) => e.stopPropagation());
 
   deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  deleteBtn.addEventListener('touchstart', (e) => e.stopPropagation());
   deleteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     deleteNote(note.id);
@@ -131,6 +145,7 @@ function attachNoteEditListeners(note) {
     duplicateNote(note.id);
   });
   duplicateBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  duplicateBtn.addEventListener('touchstart', (e) => e.stopPropagation());
 
   pin.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -265,6 +280,15 @@ function makeNoteDraggable(note) {
       y: parseFloat(note.style.top)
     };
   });
+  note.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    activeNote = note;
+    startMouse = { x: e.clientX, y: e.clientY };
+    startNotePos = {
+      x: parseFloat(note.style.left),
+      y: parseFloat(note.style.top)
+    };
+  });
 }
 
 
@@ -320,15 +344,7 @@ function loadBoardData(data) {
     note.style.backgroundColor = noteData.color;
     const hexColor=noteData.color.trim().startsWith("rgb")?rgbToHex(noteData.color):noteData.color;
 
-    note.innerHTML = `
-      <div class="note-actions">
-        <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
-        <button class="delete-btn" title="Delete Note">&times;</button>
-        <button class="duplicate-btn" title="Duplicate Note">+</button>
-      </div>
-      <div class="pin" data-note-id="${noteData.id}" title="Click to connect string"></div>
-      <div class="note-text" title="Double-click to edit">${noteData.title}</div>
-    `;
+    note.innerHTML = noteInner(hexColor,noteData.id,noteData.title);
 
     nodesLayer.appendChild(note);
     makeNoteDraggable(note);
@@ -393,6 +409,14 @@ viewport.addEventListener('mousedown', (e) => {
   startPan = { ...pan };
 });
 
+viewport.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.note')) return;
+  isPanning = true;
+  viewport.classList.add('panning');
+  startMouse = { x: e.clientX, y: e.clientY };
+  startPan = { ...pan };
+});
+
 viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
   const zoomFactor = 0.05;
@@ -436,7 +460,32 @@ window.addEventListener('mousemove', (e) => {
   }
 });
 
+window.addEventListener('touchmove', (e) => {
+  const dx = e.clientX - startMouse.x;
+  const dy = e.clientY - startMouse.y;
+  
+  if(activeNote!=null)renderConnections();
+
+  if (isPanning) {
+    const minpanx=window.innerWidth-10000*zoom;
+    const minpany=window.innerHeight-10000*zoom;
+    pan.x = clamp(startPan.x + dx,minpanx,0);
+    pan.y = clamp(startPan.y + dy,minpany,0);
+
+    updateWorldTransform();
+  } else if (activeNote) {
+    activeNote.style.left = `${startNotePos.x + (dx / zoom)}px`;
+    activeNote.style.top = `${startNotePos.y + (dy / zoom)}px`;
+  }
+});
+
 window.addEventListener('mouseup', () => {
+  isPanning = false;
+  activeNote = null;
+  viewport.classList.remove('panning');
+});
+
+window.addEventListener('touchend', () => {
   isPanning = false;
   activeNote = null;
   viewport.classList.remove('panning');
