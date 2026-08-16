@@ -26,6 +26,10 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
 
 #viewport { width: 100vw; height: 100vh; cursor: grab; position: relative; }
 #viewport.panning { cursor: grabbing; }
+#viewport,
+.note {
+  touch-action: none;
+}
 
 #world { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 #svg-layer { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; pointer-events: none;}

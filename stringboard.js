@@ -97,9 +97,7 @@ function attachNoteEditListeners(note) {
     input.addEventListener('mousedown', (e) => {
       e.stopPropagation();
     });
-    input.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-    });
+
     input.className = 'title-input';
     input.value = currentText;
 
@@ -131,10 +129,9 @@ function attachNoteEditListeners(note) {
   });
   
   colorPicker.addEventListener('mousedown', (e) => e.stopPropagation());
-  colorPicker.addEventListener('touchstart', (e) => e.stopPropagation());
 
   deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
-  deleteBtn.addEventListener('touchstart', (e) => e.stopPropagation());
+  
   deleteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     deleteNote(note.id);
@@ -145,7 +142,6 @@ function attachNoteEditListeners(note) {
     duplicateNote(note.id);
   });
   duplicateBtn.addEventListener('mousedown', (e) => e.stopPropagation());
-  duplicateBtn.addEventListener('touchstart', (e) => e.stopPropagation());
 
   pin.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -270,7 +266,7 @@ function renderConnections() {
   });
 }  
 
-function makeNoteDraggable(note) {
+/*function makeNoteDraggable(note) {
   note.addEventListener('mousedown', (e) => {
     e.stopPropagation();
     activeNote = note;
@@ -280,17 +276,24 @@ function makeNoteDraggable(note) {
       y: parseFloat(note.style.top)
     };
   });
-  note.addEventListener('touchstart', (e) => {
+}*/
+
+
+function makeNoteDraggable(note) {
+  note.addEventListener('pointerdown', (e) => {
+    // Ignore drag trigger if interacting with controls or editing text
+    if (e.target.closest('.note-actions') || e.target.closest('.pin') || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
     e.stopPropagation();
     activeNote = note;
     startMouse = { x: e.clientX, y: e.clientY };
     startNotePos = {
-      x: parseFloat(note.style.left),
-      y: parseFloat(note.style.top)
+      x: parseFloat(note.style.left) || 0,
+      y: parseFloat(note.style.top) || 0
     };
   });
 }
-
 
 function getBoardData() {
   const notes = Array.from(document.querySelectorAll('.note')).map(note => ({
@@ -401,15 +404,15 @@ addBtn.addEventListener('click', () => {
 });
 
 
-viewport.addEventListener('mousedown', (e) => {
+/*viewport.addEventListener('mousedown', (e) => {
   if (e.target.closest('.note')) return;
   isPanning = true;
   viewport.classList.add('panning');
   startMouse = { x: e.clientX, y: e.clientY };
   startPan = { ...pan };
-});
+});*/
 
-viewport.addEventListener('touchstart', (e) => {
+viewport.addEventListener('pointerdown', (e) => {
   if (e.target.closest('.note')) return;
   isPanning = true;
   viewport.classList.add('panning');
@@ -441,7 +444,7 @@ viewport.addEventListener('wheel', (e) => {
   updateWorldTransform();
 }, { passive: false });
 
-window.addEventListener('mousemove', (e) => {
+/*window.addEventListener('mousemove', (e) => {
   const dx = e.clientX - startMouse.x;
   const dy = e.clientY - startMouse.y;
   
@@ -458,19 +461,21 @@ window.addEventListener('mousemove', (e) => {
     activeNote.style.left = `${startNotePos.x + (dx / zoom)}px`;
     activeNote.style.top = `${startNotePos.y + (dy / zoom)}px`;
   }
-});
+});*/
 
-window.addEventListener('touchmove', (e) => {
+window.addEventListener('pointermove', (e) => {
+  if (!isPanning && !activeNote) return;
+
   const dx = e.clientX - startMouse.x;
   const dy = e.clientY - startMouse.y;
   
-  if(activeNote!=null)renderConnections();
+  if (activeNote != null) renderConnections();
 
   if (isPanning) {
-    const minpanx=window.innerWidth-10000*zoom;
-    const minpany=window.innerHeight-10000*zoom;
-    pan.x = clamp(startPan.x + dx,minpanx,0);
-    pan.y = clamp(startPan.y + dy,minpany,0);
+    const minpanx = window.innerWidth - 10000 * zoom;
+    const minpany = window.innerHeight - 10000 * zoom;
+    pan.x = clamp(startPan.x + dx, minpanx, 0);
+    pan.y = clamp(startPan.y + dy, minpany, 0);
 
     updateWorldTransform();
   } else if (activeNote) {
@@ -479,17 +484,22 @@ window.addEventListener('touchmove', (e) => {
   }
 });
 
-window.addEventListener('mouseup', () => {
-  isPanning = false;
-  activeNote = null;
-  viewport.classList.remove('panning');
-});
 
-window.addEventListener('touchend', () => {
+/*window.addEventListener('mouseup', () => {
   isPanning = false;
   activeNote = null;
   viewport.classList.remove('panning');
-});
+});*/
+
+const stopDraggingOrPanning = () => {
+  isPanning = false;
+  activeNote = null;
+  viewport.classList.remove('panning');
+};
+
+window.addEventListener('pointerup', stopDraggingOrPanning);
+window.addEventListener('pointercancel', stopDraggingOrPanning);
+
 
 document.getElementById('save-board-btn').addEventListener('click', async () => {
   const data = getBoardData();
