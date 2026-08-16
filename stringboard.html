@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="stringboard.css">  
+</head>
+<body>
+
+  <div id="toolbar">
+    <button id="add-note-btn" class="btn">Add Note</button>
+    <button id="new-board-btn" class="btn">New Board</button>
+    <button id="save-board-btn" class="btn">Save Board</button>
+    <button id="load-board-btn" class="btn">Load Board</button>
+  </div>
+
+  <div id="viewport">
+    <div id="world">
+      <svg id="svg-layer">
+        <defs>
+          <filter id="shadow">
+            <feDropShadow dx="4" dy="6" stdDeviation="0.2" flood-opacity="0.2" />
+          </filter>
+        </defs>
+      </svg>
+      <div id="nodes-layer"></div>
+    </div>
+  </div>
+
+
+  <script src="stringboard.js"></script>
+</body>
+</html>
