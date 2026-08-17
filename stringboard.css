@@ -143,4 +143,6 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
   margin-top: 6px;
   color: #111;
   text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

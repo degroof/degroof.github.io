@@ -1,34 +1,44 @@
-let pan = { x: -5000, y: -5000 };
-let zoom = 1;
-let isPanning = false;
-let activeNote = null;
-let filename = "stringboard-untitled.json";
+let pan = { x: -5000, y: -5000 }; //upper left of world
+let zoom = 1;  //magnification
+let isPanning = false; //true if world is being dragged
+let activeNote = null; //note being dragged
+let filename = "stringboard-untitled.json"; //last used filename
+let currentFileHandle = null; //handle to remember last load location
 
-let startMouse = { x: 0, y: 0 };
-let startPan = { x: 0, y: 0 };
-let startNotePos = { x: 0, y: 0 };
+let startMouse = { x: 0, y: 0 };  //staring point of drag operation
+let startPan = { x: 0, y: 0 }; //last pan offsets
+let startNotePos = { x: 0, y: 0 }; //start of note drag
 
-const svgLayer = document.getElementById('svg-layer');
-const viewport = document.getElementById('viewport');
-const world = document.getElementById('world');
-const nodesLayer = document.getElementById('nodes-layer');
-const addBtn = document.getElementById('add-note-btn');
+const svgLayer = document.getElementById('svg-layer');  //layer for strings
+const viewport = document.getElementById('viewport'); //main viewport div
+const world = document.getElementById('world'); //draggable & zoomable world div
+const nodesLayer = document.getElementById('nodes-layer'); //layer for notes
+const addBtn = document.getElementById('add-note-btn'); //add note button
+const saveBtn = document.getElementById('save-board-btn'); //save button
+const loadBtn = document.getElementById('load-board-btn'); //load button
+const newBtn = document.getElementById('new-board-btn'); //new button
 
-const STORAGE_KEY = 'stringboard_state_v1';
+const STORAGE_KEY = 'stringboard_state_v1';  //local storage name
 
 let connections = [];       // { id, fromId, toId }
-let selectedPinNote = null; 
+let selectedPinNote = null;  // "from" pin's note
 
-let noteIdCounter = 0;
+let noteIdCounter = 0; //counter for adding notes
 
-const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+const clamp = (val, min, max) => Math.min(Math.max(val, min), max);  //restrict value between min and max
 
+const activePointers = new Map();
+let initialPinchDistance = null;
+let initialZoom = 1;
+let initialPan = { x: 0, y: 0 };
+let initialPinchCenter = { x: 0, y: 0 };
 
+//set the transform of the world div
 function updateWorldTransform() {
   world.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
 }
 
-
+//convert screen X,Y to world coordinates
 function screenToWorld(clientX, clientY) {
   return {
     x: (clientX - pan.x) / zoom,
@@ -36,6 +46,7 @@ function screenToWorld(clientX, clientY) {
   };
 }
 
+//convert world X,Y to screen coordinates
 function worldToScreen(worldX, worldY) {
   return {
     x: worldX * zoom + pan.x,
@@ -43,27 +54,22 @@ function worldToScreen(worldX, worldY) {
   };
 }
 
-function noteInner(hexColor,noteId,title)
-{ 
-console.log(hexColor);
-console.log(noteId);
-console.log(title);
-return  `
-    <div class="note-actions">
-      <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
-      <button class="delete-btn" title="Delete Note">&times;</button>
-      <button class="duplicate-btn" title="Duplicate Note">+</button>
-    </div>
+//generate the inner html for a note
+function noteInner(hexColor, noteId) {
+  return `
+      <div class="note-actions">
+        <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
+        <button class="delete-btn" title="Delete Note">&times;</button>
+        <button class="duplicate-btn" title="Duplicate Note">+</button>
+      </div>
 
-    <div class="pin" data-note-id="${noteId}" title="Click to connect string"></div>
+      <div class="pin" data-note-id="${noteId}" title="Click to connect string"></div>
 
-    <div class="note-text" title="Double-click to edit">${title}</div>
-  `; 
+      <div class="note-text" title="Double-click to edit"></div>
+    `; 
 }
 
-
-
-
+//create a new note
 function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 200, worldY = 200 }) {
   const noteId = `note_${++noteIdCounter}`;
   const note = document.createElement('div');
@@ -72,9 +78,10 @@ function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 20
   note.style.left = `${worldX}px`;
   note.style.top = `${worldY}px`;
   note.style.backgroundColor = color;
-  const hexColor=color.trim().startsWith("rgb")?rgbToHex(color):color;
+  const hexColor = color.trim().startsWith("rgb") ? rgbToHex(color) : color;
 
-  note.innerHTML = noteInner(hexColor,noteId,title);
+  note.innerHTML = noteInner(hexColor, noteId);
+  note.querySelector('.note-text').textContent = title;
 
   nodesLayer.appendChild(note);
 
@@ -82,6 +89,7 @@ function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 20
   attachNoteEditListeners(note);
 }
 
+//set listeners on a note
 function attachNoteEditListeners(note) {
   const pin = note.querySelector('.pin');
   const titleEl = note.querySelector('.note-text');
@@ -94,7 +102,7 @@ function attachNoteEditListeners(note) {
 
     const currentText = titleEl.innerText;
     const input = document.createElement('textarea');
-    input.addEventListener('mousedown', (e) => {
+    input.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
     });
 
@@ -128,9 +136,9 @@ function attachNoteEditListeners(note) {
     note.style.backgroundColor = e.target.value;
   });
   
-  colorPicker.addEventListener('mousedown', (e) => e.stopPropagation());
+  colorPicker.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  deleteBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   
   deleteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -141,7 +149,7 @@ function attachNoteEditListeners(note) {
     e.stopPropagation();
     duplicateNote(note.id);
   });
-  duplicateBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  duplicateBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
   pin.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -157,16 +165,15 @@ function attachNoteEditListeners(note) {
   });
 }
 
+//delete a note
 function deleteNote(noteId) {
-
   connections = connections.filter(c => c.fromId !== noteId && c.toId !== noteId);
-  
   const note = document.getElementById(noteId);
   if (note) note.remove();
-
   renderConnections();
 }  
 
+//create a duplicate of the note and place it down and to the right
 function duplicateNote(noteId) {
   const note = document.getElementById(noteId);
   
@@ -183,7 +190,8 @@ function duplicateNote(noteId) {
   renderConnections();
 }  
 
-
+//add a connection between 2 pins
+//if one already exists, remove it
 function addConnection(fromId, toId) {
 
   const exists = connections.some(c => 
@@ -201,21 +209,18 @@ function addConnection(fromId, toId) {
   }
   else
   {
-
     connections = connections.filter(c => !((c.fromId === fromId && c.toId === toId) || 
     (c.fromId === toId && c.toId === fromId)));
     renderConnections();
   }
 }
 
-
+//get the coordinates of the pin for a note
 function getPinCenter(noteEl) {
   const pin = noteEl.querySelector('.pin');
-  
 
   const noteX = parseFloat(noteEl.style.left) || 0;
   const noteY = parseFloat(noteEl.style.top) || 0;
-
 
   const pinOffsetX = pin.offsetLeft + (pin.offsetWidth / 2);
   const pinOffsetY = pin.offsetTop + (pin.offsetHeight / 2);
@@ -226,6 +231,7 @@ function getPinCenter(noteEl) {
   };
 }
 
+//remove highlight on "from" pin
 function cancelConnection() {
   if (selectedPinNote) {
     selectedPinNote.querySelector('.pin').classList.remove('active-pin');
@@ -233,6 +239,7 @@ function cancelConnection() {
   }
 }
 
+//draw the strings
 function renderConnections() {
 
   svgLayer.querySelectorAll('line').forEach(el => {
@@ -266,19 +273,7 @@ function renderConnections() {
   });
 }  
 
-/*function makeNoteDraggable(note) {
-  note.addEventListener('mousedown', (e) => {
-    e.stopPropagation();
-    activeNote = note;
-    startMouse = { x: e.clientX, y: e.clientY };
-    startNotePos = {
-      x: parseFloat(note.style.left),
-      y: parseFloat(note.style.top)
-    };
-  });
-}*/
-
-
+//start a note drag
 function makeNoteDraggable(note) {
   note.addEventListener('pointerdown', (e) => {
     // Ignore drag trigger if interacting with controls or editing text
@@ -295,6 +290,7 @@ function makeNoteDraggable(note) {
   });
 }
 
+//get data for board storage 
 function getBoardData() {
   const notes = Array.from(document.querySelectorAll('.note')).map(note => ({
     id: note.id,
@@ -315,6 +311,7 @@ function getBoardData() {
   };
 }
 
+//convert color rgb string to hex string
 function rgbToHex(rgb) {
   const values = rgb.match(/\d+/g);
   if (!values || values.length < 3) return null;
@@ -325,6 +322,7 @@ function rgbToHex(rgb) {
     .toUpperCase();
 }  
 
+//render board from data 
 function loadBoardData(data) {
   if (!data || !Array.isArray(data.notes)) return;
 
@@ -345,9 +343,10 @@ function loadBoardData(data) {
     note.style.left = `${noteData.x}px`;
     note.style.top = `${noteData.y}px`;
     note.style.backgroundColor = noteData.color;
-    const hexColor=noteData.color.trim().startsWith("rgb")?rgbToHex(noteData.color):noteData.color;
+    const hexColor = noteData.color.trim().startsWith("rgb") ? rgbToHex(noteData.color) : noteData.color;
 
-    note.innerHTML = noteInner(hexColor,noteData.id,noteData.title);
+    note.innerHTML = noteInner(hexColor, noteData.id);
+    note.querySelector('.note-text').textContent = noteData.title;
 
     nodesLayer.appendChild(note);
     makeNoteDraggable(note);
@@ -357,12 +356,14 @@ function loadBoardData(data) {
   connections = data.connections || [];
   renderConnections();
 }  
-  
+ 
+//save board state to browser storage
 function saveToLocalStorage() {
   const data = getBoardData();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+//load board state from browser storage
 function loadFromLocalStorage() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -378,6 +379,7 @@ function loadFromLocalStorage() {
   }
 }
 
+//clear the board
 function newBoard()
 {
   nodesLayer.innerHTML = '';
@@ -387,14 +389,19 @@ function newBoard()
   noteIdCounter = 0;
   pan = { x: 0, y: 0 };
   zoom = 1;
-  updateWorldTransform();
 
+  filename = "stringboard-untitled.json";
+  currentFileHandle = null;
+
+  updateWorldTransform();
+  renderConnections();
 }
 
+//autosave
 window.addEventListener('beforeunload', saveToLocalStorage);
 
+//add a new note
 addBtn.addEventListener('click', () => {
-
   const centerWorld = screenToWorld(window.innerWidth / 2, window.innerHeight / 2);
   createNote({
     title: "Placeholder text",
@@ -403,15 +410,7 @@ addBtn.addEventListener('click', () => {
   });
 });
 
-
-/*viewport.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.note')) return;
-  isPanning = true;
-  viewport.classList.add('panning');
-  startMouse = { x: e.clientX, y: e.clientY };
-  startPan = { ...pan };
-});*/
-
+//start panning
 viewport.addEventListener('pointerdown', (e) => {
   if (e.target.closest('.note')) return;
   isPanning = true;
@@ -420,6 +419,26 @@ viewport.addEventListener('pointerdown', (e) => {
   startPan = { ...pan };
 });
 
+//touch has started; could be mouse or beginning of multi-touch
+window.addEventListener('pointerdown', (e) => {
+  activePointers.set(e.pointerId, e);
+  //if multi-touch, stop panning and dragging
+  if (activePointers.size >= 2) {
+    isPanning = false;
+    activeNote = null;
+    viewport.classList.remove('panning');
+    //if exactly 2 touch points, start pinching
+    if (activePointers.size === 2) {
+      const [p1, p2] = Array.from(activePointers.values());
+      initialPinchDistance = getDistance(p1, p2);
+      initialZoom = zoom;
+      initialPan = { ...pan };
+      initialPinchCenter = getCenter(p1, p2);
+    }
+  }
+}, { capture: true });
+
+//zoom in / out (desktop)
 viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
   const zoomFactor = 0.05;
@@ -440,35 +459,48 @@ viewport.addEventListener('wheel', (e) => {
   pan.x = clamp(mouseX - (worldX * zoom),minpanx,0);
   pan.y = clamp(mouseY - (worldY * zoom),minpany,0);
 
-
   updateWorldTransform();
 }, { passive: false });
 
-/*window.addEventListener('mousemove', (e) => {
-  const dx = e.clientX - startMouse.x;
-  const dy = e.clientY - startMouse.y;
-  
-  if(activeNote!=null)renderConnections();
-
-  if (isPanning) {
-    const minpanx=window.innerWidth-10000*zoom;
-    const minpany=window.innerHeight-10000*zoom;
-    pan.x = clamp(startPan.x + dx,minpanx,0);
-    pan.y = clamp(startPan.y + dy,minpany,0);
-
-    updateWorldTransform();
-  } else if (activeNote) {
-    activeNote.style.left = `${startNotePos.x + (dx / zoom)}px`;
-    activeNote.style.top = `${startNotePos.y + (dy / zoom)}px`;
-  }
-});*/
-
+//drag, pan or pinch
 window.addEventListener('pointermove', (e) => {
+  if (activePointers.has(e.pointerId)) {
+    activePointers.set(e.pointerId, e);
+  }
+
+  //multi-touch, so pinch
+  if (activePointers.size === 2 && initialPinchDistance) {
+    e.preventDefault();
+    const [p1, p2] = Array.from(activePointers.values());
+    const currentDistance = getDistance(p1, p2);
+    const currentCenter = getCenter(p1, p2);
+
+    if (initialPinchDistance > 0) {
+      const scaleFactor = currentDistance / initialPinchDistance;
+      const newZoom = clamp(initialZoom * scaleFactor, 0.2, 3.0);
+
+      // Focal point math based on initial center point
+      const worldX = (initialPinchCenter.x - initialPan.x) / initialZoom;
+      const worldY = (initialPinchCenter.y - initialPan.y) / initialZoom;
+
+      const minpanx = window.innerWidth - 10000 * newZoom;
+      const minpany = window.innerHeight - 10000 * newZoom;
+
+      zoom = newZoom;
+      pan.x = clamp(currentCenter.x - (worldX * zoom), minpanx, 0);
+      pan.y = clamp(currentCenter.y - (worldY * zoom), minpany, 0);
+
+      updateWorldTransform();
+    }
+    return; //skip pan & drag when pinching
+  }
+
+  //single touch, so do drag or pan if active
   if (!isPanning && !activeNote) return;
 
   const dx = e.clientX - startMouse.x;
   const dy = e.clientY - startMouse.y;
-  
+
   if (activeNote != null) renderConnections();
 
   if (isPanning) {
@@ -484,36 +516,55 @@ window.addEventListener('pointermove', (e) => {
   }
 });
 
-
-/*window.addEventListener('mouseup', () => {
-  isPanning = false;
-  activeNote = null;
-  viewport.classList.remove('panning');
-});*/
-
+//end of panning or dragging
 const stopDraggingOrPanning = () => {
   isPanning = false;
   activeNote = null;
   viewport.classList.remove('panning');
 };
 
-window.addEventListener('pointerup', stopDraggingOrPanning);
-window.addEventListener('pointercancel', stopDraggingOrPanning);
+//remove a pointer; if no longer multi-touch, stop pinch
+const removePointer = (e) => {
+  activePointers.delete(e.pointerId);
+  if (activePointers.size < 2) {
+    initialPinchDistance = null;
+  }
+};
 
+//one touch ended, so remove pointer and stop dragging & panning if active
+window.addEventListener('pointerup', (e) => {
+  removePointer(e);
+  stopDraggingOrPanning();
+});
 
-document.getElementById('save-board-btn').addEventListener('click', async () => {
+//one touch ended, so remove pointer and stop dragging & panning if active
+window.addEventListener('pointercancel', (e) => {
+  removePointer(e);
+  stopDraggingOrPanning();
+});
+
+//save board to file
+saveBtn.addEventListener('click', async () => {
   const data = getBoardData();
   const jsonStr = JSON.stringify(data, null, 2);
 
   try {
-    const handle = await window.showSaveFilePicker({
+    const options = {
       suggestedName: filename,
       types: [{
         description: 'JSON Files',
         accept: { 'application/json': ['.json'] },
       }],
-    });
-    fileName = handle.name;
+    };
+
+    if (currentFileHandle) {
+      options.startIn = currentFileHandle;
+    }
+
+    const handle = await window.showSaveFilePicker(options);
+    currentFileHandle = handle;
+    filename = handle.name;
+
     const writable = await handle.createWritable();
     await writable.write(jsonStr);
     await writable.close();
@@ -524,34 +575,54 @@ document.getElementById('save-board-btn').addEventListener('click', async () => 
   }
 });
 
-document.getElementById('load-board-btn').addEventListener('click', () => {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = '.json,application/json';
+//load board from file
+loadBtn.addEventListener('click', async () => {
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{
+        description: 'JSON Files',
+        accept: { 'application/json': ['.json'] },
+      }],
+      multiple: false
+    });
 
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    filename = file.name;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = JSON.parse(evt.target.result);
-        loadBoardData(data);
-        saveToLocalStorage(); // Sync loaded state to local storage
-      } catch (err) {
-        alert('Invalid board file format.');
-      }
-    };
-    reader.readAsText(file);
-  });
+    const file = await handle.getFile();
+    const text = await file.text();
+    const data = JSON.parse(text);
 
-  fileInput.click();
+    currentFileHandle = handle;
+    filename = handle.name;
+    data.filename = filename;
+
+    loadBoardData(data);
+    saveToLocalStorage();
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('Error loading file:', err);
+    }
+  }
 });
 
-document.getElementById('new-board-btn').addEventListener('click', () => {
+//create new board
+newBtn.addEventListener('click', () => {
   newBoard();
 });
 
+//get the distance between 2 pointers
+function getDistance(p1, p2) {
+  const dx = p1.clientX - p2.clientX;
+  const dy = p1.clientY - p2.clientY;
+  return Math.hypot(dx, dy);
+}
+
+//get the center point between 2 pointers
+function getCenter(p1, p2) {
+  return {
+    x: (p1.clientX + p2.clientX) / 2,
+    y: (p1.clientY + p2.clientY) / 2
+  };
+}
+
+//initialize
 updateWorldTransform();
 loadFromLocalStorage();
