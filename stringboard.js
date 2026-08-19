@@ -27,11 +27,16 @@ let noteIdCounter = 0; //counter for adding notes
 
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max);  //restrict value between min and max
 
+//pinch and zoom stuff
 const activePointers = new Map();
 let initialPinchDistance = null;
 let initialZoom = 1;
 let initialPan = { x: 0, y: 0 };
 let initialPinchCenter = { x: 0, y: 0 };
+
+//note resize stuff
+let resizeOffset = { dx: 0, dy: 0 };
+let resizingNote = null;
 
 //set the transform of the world div
 function updateWorldTransform() {
@@ -58,25 +63,30 @@ function worldToScreen(worldX, worldY) {
 function noteInner(hexColor, noteId) {
   return `
       <div class="note-actions">
+        <button class="edit-btn" title="Edit Text">&#x1F589;</button>
+        <button class="chk-btn" title="Finish Editing">&#x2713;</button>
         <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
         <button class="delete-btn" title="Delete Note">&times;</button>
         <button class="duplicate-btn" title="Duplicate Note">+</button>
       </div>
 
-      <div class="pin" data-note-id="${noteId}" title="Click to connect string"></div>
+      <div class="pin" data-note-id="${noteId}" title="Click to connect/disconnect string"></div>
 
       <div class="note-text" title="Double-click to edit"></div>
+      <button class="note-resize">&#8991;</button>
     `; 
 }
 
 //create a new note
-function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 200, worldY = 200 }) {
+function createNote({ title = "Placeholder text", color = "#FFFF80", worldX = 200, worldY = 200, width = 250, height = 250 }) {
   const noteId = `note_${++noteIdCounter}`;
   const note = document.createElement('div');
   note.className = 'note';
   note.id = noteId;
   note.style.left = `${worldX}px`;
   note.style.top = `${worldY}px`;
+  note.style.width = `${width}px`;
+  note.style.height = `${height}px`;
   note.style.backgroundColor = color;
   const hexColor = color.trim().startsWith("rgb") ? rgbToHex(color) : color;
 
@@ -95,11 +105,15 @@ function attachNoteEditListeners(note) {
   const titleEl = note.querySelector('.note-text');
   const deleteBtn = note.querySelector('.delete-btn');
   const duplicateBtn = note.querySelector('.duplicate-btn');
+  const editBtn = note.querySelector('.edit-btn');
+  const chkBtn = note.querySelector('.chk-btn');
   const colorPicker = note.querySelector('.color-picker');
+  const noteResize = note.querySelector('.note-resize');
 
   titleEl.addEventListener('dblclick', (e) => {
     e.stopPropagation(); 
-
+    editBtn.style.display='none';
+    chkBtn.style.display='block';
     const currentText = titleEl.innerText;
     const input = document.createElement('textarea');
     input.addEventListener('pointerdown', (e) => {
@@ -117,16 +131,14 @@ function attachNoteEditListeners(note) {
       const newText = input.value.trim() || "Placeholder text";
       titleEl.innerText = newText;
       input.replaceWith(titleEl);
+      editBtn.style.display='block';
+      chkBtn.style.display='none';
     };
 
     input.addEventListener('blur', saveText);
     input.addEventListener('keydown', (evt) => {
       if (evt.key === 'Enter' && evt.ctrlKey) {
         input.blur();
-      }
-      
-      if (evt.key === 'Escape') {
-        input.replaceWith(titleEl); 
       }
     });
   });
@@ -150,6 +162,15 @@ function attachNoteEditListeners(note) {
     duplicateNote(note.id);
   });
   duplicateBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  editBtn.addEventListener('click', (e) => {
+      const clickEvent = document.createEvent("MouseEvents");
+      clickEvent.initEvent("dblclick", true, true);
+      titleEl.dispatchEvent(clickEvent);
+  });
+  editBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  makeNoteResizeable(noteResize);
 
   pin.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -245,7 +266,9 @@ function renderConnections() {
   svgLayer.querySelectorAll('line').forEach(el => {
     el.remove();
     });
-
+  svgLayer.querySelectorAll('circle').forEach(el => {
+    el.remove();
+    });
   connections.forEach(conn => {
     const fromNote = document.getElementById(conn.fromId);
     const toNote = document.getElementById(conn.toId);
@@ -266,17 +289,27 @@ function renderConnections() {
     line.setAttribute("stroke-linecap", "round");
     line.setAttribute("filter", "url(#shadow)");
  
-    
+    svgLayer.appendChild(line);
+
     line.dataset.id = conn.id;
 
-    svgLayer.appendChild(line);
+
   });
+  nodesLayer.querySelectorAll('.note').forEach(note => {
+    const pinCenter = getPinCenter(note);
+    const cir = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    cir.setAttribute("cx", pinCenter.x);
+    cir.setAttribute("cy", pinCenter.y);
+    cir.setAttribute("r", 8);
+    cir.setAttribute("fill", "url(#redSphere)");
+    svgLayer.appendChild(cir);
+  });
+
 }  
 
 //start a note drag
 function makeNoteDraggable(note) {
   note.addEventListener('pointerdown', (e) => {
-    // Ignore drag trigger if interacting with controls or editing text
     if (e.target.closest('.note-actions') || e.target.closest('.pin') || e.target.tagName === 'TEXTAREA') {
       return;
     }
@@ -290,7 +323,19 @@ function makeNoteDraggable(note) {
   });
 }
 
-//get data for board storage 
+//start a note resize
+function makeNoteResizeable(corner) {
+  corner.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    resizingNote = corner.parentNode;
+    const initialPosWorld = screenToWorld(e.clientX,e.clientY);
+    const initialSize = {w: parseFloat(resizingNote.style.width), h: parseFloat(resizingNote.style.height)};
+    const initialNotePosition = {x: parseFloat(resizingNote.style.left), y: parseFloat(resizingNote.style.top)};
+    resizeOffset = {dx: initialNotePosition.x - initialPosWorld.x + initialSize.w, dy: initialNotePosition.y - initialPosWorld.y + initialSize.h};
+  });
+}
+
+//get data for board storage
 function getBoardData() {
   const notes = Array.from(document.querySelectorAll('.note')).map(note => ({
     id: note.id,
@@ -298,8 +343,9 @@ function getBoardData() {
     color: note.style.backgroundColor,
     x: parseFloat(note.style.left) || 0,
     y: parseFloat(note.style.top) || 0,
+    w: note.offsetWidth,
+    h: note.offsetHeight
   }));
-
   return {
     version: 1,
     noteIdCounter,
@@ -342,6 +388,8 @@ function loadBoardData(data) {
     note.id = noteData.id;
     note.style.left = `${noteData.x}px`;
     note.style.top = `${noteData.y}px`;
+    note.style.width = `${noteData.w}px`;
+    note.style.height = `${noteData.h}px`;
     note.style.backgroundColor = noteData.color;
     const hexColor = noteData.color.trim().startsWith("rgb") ? rgbToHex(noteData.color) : noteData.color;
 
@@ -387,7 +435,7 @@ function newBoard()
   cancelConnection();
 
   noteIdCounter = 0;
-  pan = { x: 0, y: 0 };
+  pan = { x: -5000, y: -5000 };
   zoom = 1;
 
   filename = "stringboard-untitled.json";
@@ -408,6 +456,8 @@ addBtn.addEventListener('click', () => {
     worldX: centerWorld.x - 90,
     worldY: centerWorld.y - 50
   });
+  updateWorldTransform();
+  renderConnections();
 });
 
 //start panning
@@ -495,8 +545,8 @@ window.addEventListener('pointermove', (e) => {
     return; //skip pan & drag when pinching
   }
 
-  //single touch, so do drag or pan if active
-  if (!isPanning && !activeNote) return;
+  //single touch, so do drag or pan or resize if active
+  if (!isPanning && !activeNote && !resizingNote) return;
 
   const dx = e.clientX - startMouse.x;
   const dy = e.clientY - startMouse.y;
@@ -513,7 +563,14 @@ window.addEventListener('pointermove', (e) => {
   } else if (activeNote) {
     activeNote.style.left = `${startNotePos.x + (dx / zoom)}px`;
     activeNote.style.top = `${startNotePos.y + (dy / zoom)}px`;
-  }
+  } else if (resizingNote) {
+    const notePos = {x: parseFloat(resizingNote.style.left), y: parseFloat(resizingNote.style.top)};
+    const mousePos = screenToWorld(e.clientX,e.clientY);
+    const newSize = {w: mousePos.x - notePos.x + resizeOffset.dx, h: mousePos.y - notePos.y + resizeOffset.dy};
+    resizingNote.style.width = `${newSize.w}px`;
+    resizingNote.style.height = `${newSize.h}px`;
+    renderConnections();
+ }
 });
 
 //end of panning or dragging
@@ -521,6 +578,7 @@ const stopDraggingOrPanning = () => {
   isPanning = false;
   activeNote = null;
   viewport.classList.remove('panning');
+  resizingNote = null;
 };
 
 //remove a pointer; if no longer multi-touch, stop pinch

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="stylesheet" href="stringboard.css?v=0816261310">
+  <link rel="stylesheet" href="stringboard.css?v=0819260639">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
 </head>
 <body>
@@ -14,20 +14,27 @@
     <button id="load-board-btn" class="btn">Load Board</button>
   </div>
 
+
+
   <div id="viewport">
     <div id="world">
+      <div id="nodes-layer"></div>
       <svg id="svg-layer">
         <defs>
           <filter id="shadow">
             <feDropShadow dx="4" dy="6" stdDeviation="0.2" flood-opacity="0.2" />
           </filter>
+          <radialGradient id="redSphere" cx="35%" cy="35%" r="65%" fx="25%" fy="25%">
+              <stop offset="0%" stop-color="#ff9999" />
+              <stop offset="50%" stop-color="#ff0000" />
+              <stop offset="100%" stop-color="#800000" />
+          </radialGradient>
         </defs>
       </svg>
-      <div id="nodes-layer"></div>
     </div>
   </div>
 
 
-  <script src="stringboard.js?v=0817260716"></script>
+  <script src="stringboard.js?v=0819260639"></script>
 </body>
 </html>
