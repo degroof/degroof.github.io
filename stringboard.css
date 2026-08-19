@@ -56,13 +56,37 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
   right: 6px;
   display: flex;
   gap: 4px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  /*opacity: 0;
+  transition: opacity 0.15s ease;*/
 }
 
-.note:hover .note-actions {
-  opacity: 1; 
+@media (pointer: fine){
+  .note-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .note:hover .note-actions {
+    opacity: 1;
+  }
 }
+
+@media (pointer: coarse){
+  .note-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 4px;
+  }
+
+}
+
+
 
 .color-picker {
   width: 18px;
@@ -199,4 +223,5 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
   word-break: break-word;
   flex: 1;
   overflow-y: auto;
+  touch-action: none;
 }

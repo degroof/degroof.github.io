@@ -63,7 +63,7 @@ function worldToScreen(worldX, worldY) {
 function noteInner(hexColor, noteId) {
   return `
       <div class="note-actions">
-        <button class="edit-btn" title="Edit Text">&#x1F589;</button>
+        <button class="edit-btn" title="Edit Text">&#x270E;</button>
         <button class="chk-btn" title="Finish Editing">&#x2713;</button>
         <input type="color" class="color-picker" value="${hexColor}" title="Change Note Color" />
         <button class="delete-btn" title="Delete Note">&times;</button>
@@ -111,7 +111,7 @@ function attachNoteEditListeners(note) {
   const noteResize = note.querySelector('.note-resize');
 
   titleEl.addEventListener('dblclick', (e) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     editBtn.style.display='none';
     chkBtn.style.display='block';
     const currentText = titleEl.innerText;
@@ -142,6 +142,7 @@ function attachNoteEditListeners(note) {
       }
     });
   });
+
 
   colorPicker.addEventListener('input', (e) => {
     e.stopPropagation();
