@@ -2,10 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="stylesheet" href="stringboard.css?v=0819260758">
+  <link rel="stylesheet" href="stringboard.css?v=0820260758">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
 </head>
 <body>
+
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Unsaved Changes</h3>
+      <p>You have unsaved changes on your board. Would you like to save before proceeding?</p>
+      <div class="modal-actions">
+        <button id="modal-save-btn" class="btn">Save</button>
+        <button id="modal-discard-btn" class="btn">Discard</button>
+        <button id="modal-cancel-btn" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toolbar">
     <button id="add-note-btn" class="btn">Add Note</button>
@@ -35,6 +47,6 @@
   </div>
 
 
-  <script src="stringboard.js?v=0819260758"></script>
+  <script src="stringboard.js?v=0820260758"></script>
 </body>
 </html>

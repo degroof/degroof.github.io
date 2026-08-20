@@ -38,6 +38,55 @@ let initialPinchCenter = { x: 0, y: 0 };
 let resizeOffset = { dx: 0, dy: 0 };
 let resizingNote = null;
 
+//ask before overwriting
+let isDirty = false;
+
+function markDirty() {
+  isDirty = true;
+}
+
+function clearDirty() {
+  isDirty = false;
+}
+
+//check if dirty
+function checkUnsavedChanges(onProceed) {
+  if (!isDirty) {
+    onProceed();
+    return;
+  }
+
+  const modal = document.getElementById('confirm-modal');
+  modal.classList.remove('hidden');
+
+  const saveBtn = document.getElementById('modal-save-btn');
+  const discardBtn = document.getElementById('modal-discard-btn');
+  const cancelBtn = document.getElementById('modal-cancel-btn');
+
+  const cleanup = () => {
+    modal.classList.add('hidden');
+    saveBtn.replaceWith(saveBtn.cloneNode(true));
+    discardBtn.replaceWith(discardBtn.cloneNode(true));
+    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+  };
+
+  document.getElementById('modal-save-btn').addEventListener('click', async () => {
+    cleanup();
+    await saveBoardToFile();
+    if (!isDirty) onProceed();
+  });
+
+  document.getElementById('modal-discard-btn').addEventListener('click', () => {
+    cleanup();
+    clearDirty();
+    onProceed();
+  });
+
+  document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+    cleanup();
+  });
+}
+
 //set the transform of the world div
 function updateWorldTransform() {
   world.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
@@ -129,6 +178,7 @@ function attachNoteEditListeners(note) {
 
     const saveText = () => {
       const newText = input.value.trim() || "Placeholder text";
+      if(newText!=currentText) markDirty();
       titleEl.innerText = newText;
       input.replaceWith(titleEl);
       editBtn.style.display='block';
@@ -182,6 +232,7 @@ function attachNoteEditListeners(note) {
       cancelConnection();
     } else {
       addConnection(selectedPinNote.id, note.id);
+      markDirty();
       cancelConnection();
     }
   });
@@ -192,6 +243,7 @@ function deleteNote(noteId) {
   connections = connections.filter(c => c.fromId !== noteId && c.toId !== noteId);
   const note = document.getElementById(noteId);
   if (note) note.remove();
+  markDirty();
   renderConnections();
 }  
 
@@ -208,7 +260,7 @@ function duplicateNote(noteId) {
     worldX: parseFloat(note.style.left)+50,
     worldY: parseFloat(note.style.top)+50
   });
-
+  markDirty();
   renderConnections();
 }  
 
@@ -441,7 +493,7 @@ function newBoard()
 
   filename = "stringboard-untitled.json";
   currentFileHandle = null;
-
+  clearDirty();
   updateWorldTransform();
   renderConnections();
 }
@@ -457,6 +509,7 @@ addBtn.addEventListener('click', () => {
     worldX: centerWorld.x - 90,
     worldY: centerWorld.y - 50
   });
+  markDirty();
   updateWorldTransform();
   renderConnections();
 });
@@ -548,7 +601,7 @@ window.addEventListener('pointermove', (e) => {
 
   //single touch, so do drag or pan or resize if active
   if (!isPanning && !activeNote && !resizingNote) return;
-
+  markDirty();
   const dx = e.clientX - startMouse.x;
   const dy = e.clientY - startMouse.y;
 
@@ -603,7 +656,8 @@ window.addEventListener('pointercancel', (e) => {
 });
 
 //save board to file
-saveBtn.addEventListener('click', async () => {
+async function saveBoardToFile()
+{
   const data = getBoardData();
   const jsonStr = JSON.stringify(data, null, 2);
 
@@ -627,15 +681,27 @@ saveBtn.addEventListener('click', async () => {
     const writable = await handle.createWritable();
     await writable.write(jsonStr);
     await writable.close();
+    clearDirty();
   } catch (err) {
     if (err.name !== 'AbortError') {
       console.error('Error saving file:', err);
     }
   }
+}
+
+saveBtn.addEventListener('click', async () => {
+  saveBoardToFile();
+});
+
+loadBtn.addEventListener('click', () => {
+  checkUnsavedChanges(async () => {
+    await executeLoadFromFile();
+    clearDirty();
+  });
 });
 
 //load board from file
-loadBtn.addEventListener('click', async () => {
+async function executeLoadFromFile() {
   try {
     const [handle] = await window.showOpenFilePicker({
       types: [{
@@ -654,17 +720,21 @@ loadBtn.addEventListener('click', async () => {
     data.filename = filename;
 
     loadBoardData(data);
+    clearDirty();
     saveToLocalStorage();
   } catch (err) {
     if (err.name !== 'AbortError') {
       console.error('Error loading file:', err);
     }
   }
-});
+};
 
 //create new board
 newBtn.addEventListener('click', () => {
-  newBoard();
+  checkUnsavedChanges(() => {
+    newBoard();
+    clearDirty();
+  });
 });
 
 //get the distance between 2 pointers
