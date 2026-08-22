@@ -1,12 +1,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-select: none; }
+body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-select: none; touch-action: none}
 
 
 #toolbar {
   position: fixed;
   top: 16px;
   left: 16px;
-  z-index: 100;
+  z-index: 9;
   display: flex;
   gap: 10px;
 }
@@ -26,13 +26,13 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
 
 #viewport { width: 100vw; height: 100vh; cursor: grab; position: relative; }
 #viewport.panning { cursor: grabbing; }
-#viewport,
-.note {
+#viewport.note {
   touch-action: none;
 }
 
 #world { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
-#svg-layer { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; pointer-events: none;}
+
+#svg-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5; touch-action: none}
 
 .note {
   position: absolute;
@@ -56,8 +56,6 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
   right: 6px;
   display: flex;
   gap: 4px;
-  /*opacity: 0;
-  transition: opacity 0.15s ease;*/
 }
 
 @media (pointer: fine){
@@ -234,7 +232,7 @@ body { overflow: hidden; background: #A5846A; font-family: sans-serif; user-sele
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;

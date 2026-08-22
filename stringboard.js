@@ -1,4 +1,7 @@
-let pan = { x: -5000, y: -5000 }; //upper left of world
+const minZoom = 0.1;
+const maxZoom = 2.0;
+
+let pan = { x: 0, y: 0 }; //upper left of world
 let zoom = 1;  //magnification
 let isPanning = false; //true if world is being dragged
 let activeNote = null; //note being dragged
@@ -90,6 +93,8 @@ function checkUnsavedChanges(onProceed) {
 //set the transform of the world div
 function updateWorldTransform() {
   world.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+  clipObjects();
+  renderConnections();
 }
 
 //convert screen X,Y to world coordinates
@@ -313,23 +318,30 @@ function cancelConnection() {
   }
 }
 
-//draw the strings
+//draw the strings and pins
 function renderConnections() {
+  svgLayer.querySelectorAll('line, circle').forEach(el => el.remove());
+  const margin = 500;
 
-  svgLayer.querySelectorAll('line').forEach(el => {
-    el.remove();
-    });
-  svgLayer.querySelectorAll('circle').forEach(el => {
-    el.remove();
-    });
+  //run through connections and draw a line for each if it's inside the viewport
   connections.forEach(conn => {
     const fromNote = document.getElementById(conn.fromId);
     const toNote = document.getElementById(conn.toId);
-    
     if (!fromNote || !toNote) return;
 
-    const p1 = getPinCenter(fromNote);
-    const p2 = getPinCenter(toNote);
+    const p1World = getPinCenter(fromNote);
+    const p2World = getPinCenter(toNote);
+
+    const p1 = worldToScreen(p1World.x, p1World.y);
+    const p2 = worldToScreen(p2World.x, p2World.y);
+
+    //skip line it fully outside viewport
+    const minX = Math.min(p1.x, p2.x), maxX = Math.max(p1.x, p2.x);
+    const minY = Math.min(p1.y, p2.y), maxY = Math.max(p1.y, p2.y);
+    if (maxX < -margin || minX > window.innerWidth + margin ||
+        maxY < -margin || minY > window.innerHeight + margin) {
+      return;
+    }
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.className = "string-line";
@@ -338,27 +350,28 @@ function renderConnections() {
     line.setAttribute("x2", p2.x);
     line.setAttribute("y2", p2.y);
     line.setAttribute("stroke", "#101080");
-    line.setAttribute("stroke-width", "3");
-    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("stroke-width", 3 * zoom);
     line.setAttribute("filter", "url(#shadow)");
- 
     svgLayer.appendChild(line);
-
-    line.dataset.id = conn.id;
-
-
   });
+
+  //run through the notes and render a pin head for each if it's inside the viewport
   nodesLayer.querySelectorAll('.note').forEach(note => {
-    const pinCenter = getPinCenter(note);
+    const pc = getPinCenter(note);
+    const pinCenter = worldToScreen(pc.x,pc.y);
+    //skip if fully outside
+    if (pinCenter.x < -margin || pinCenter.x > window.innerWidth + margin ||
+        pinCenter.y < -margin || pinCenter.y > window.innerHeight + margin) {
+      return;
+    }
     const cir = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     cir.setAttribute("cx", pinCenter.x);
     cir.setAttribute("cy", pinCenter.y);
-    cir.setAttribute("r", 8);
+    cir.setAttribute("r", 8 * zoom);
     cir.setAttribute("fill", "url(#redSphere)");
     svgLayer.appendChild(cir);
   });
-
-}  
+}
 
 //start a note drag
 function makeNoteDraggable(note) {
@@ -488,7 +501,7 @@ function newBoard()
   cancelConnection();
 
   noteIdCounter = 0;
-  pan = { x: -5000, y: -5000 };
+  pan = { x: 0, y: 0 };
   zoom = 1;
 
   filename = "stringboard-untitled.json";
@@ -553,15 +566,13 @@ viewport.addEventListener('wheel', (e) => {
   const worldY = (mouseY - pan.y) / zoom;    
 
   if (e.deltaY < 0) {
-    zoom = Math.min(zoom * (1 + zoomFactor), 3.0);
+    zoom = Math.min(zoom * (1 + zoomFactor), maxZoom);
   } else {
-    zoom = Math.max(zoom * (1 - zoomFactor), 0.2);
+    zoom = Math.max(zoom * (1 - zoomFactor), minZoom);
   }    
   
-  const minpanx=window.innerWidth-10000*zoom;
-  const minpany=window.innerHeight-10000*zoom;
-  pan.x = clamp(mouseX - (worldX * zoom),minpanx,0);
-  pan.y = clamp(mouseY - (worldY * zoom),minpany,0);
+  pan.x = mouseX - (worldX * zoom);
+  pan.y = mouseY - (worldY * zoom);
 
   updateWorldTransform();
 }, { passive: false });
@@ -581,18 +592,15 @@ window.addEventListener('pointermove', (e) => {
 
     if (initialPinchDistance > 0) {
       const scaleFactor = currentDistance / initialPinchDistance;
-      const newZoom = clamp(initialZoom * scaleFactor, 0.2, 3.0);
+      const newZoom = clamp(initialZoom * scaleFactor, minZoom, maxZoom);
 
       // Focal point math based on initial center point
       const worldX = (initialPinchCenter.x - initialPan.x) / initialZoom;
       const worldY = (initialPinchCenter.y - initialPan.y) / initialZoom;
 
-      const minpanx = window.innerWidth - 10000 * newZoom;
-      const minpany = window.innerHeight - 10000 * newZoom;
-
       zoom = newZoom;
-      pan.x = clamp(currentCenter.x - (worldX * zoom), minpanx, 0);
-      pan.y = clamp(currentCenter.y - (worldY * zoom), minpany, 0);
+      pan.x = currentCenter.x - (worldX * zoom);
+      pan.y = currentCenter.y - (worldY * zoom);
 
       updateWorldTransform();
     }
@@ -608,11 +616,8 @@ window.addEventListener('pointermove', (e) => {
   if (activeNote != null) renderConnections();
 
   if (isPanning) {
-    const minpanx = window.innerWidth - 10000 * zoom;
-    const minpany = window.innerHeight - 10000 * zoom;
-    pan.x = clamp(startPan.x + dx, minpanx, 0);
-    pan.y = clamp(startPan.y + dy, minpany, 0);
-
+    pan.x = startPan.x + dx;
+    pan.y = startPan.y + dy;
     updateWorldTransform();
   } else if (activeNote) {
     activeNote.style.left = `${startNotePos.x + (dx / zoom)}px`;
@@ -647,6 +652,7 @@ const removePointer = (e) => {
 window.addEventListener('pointerup', (e) => {
   removePointer(e);
   stopDraggingOrPanning();
+  saveToLocalStorage();
 });
 
 //one touch ended, so remove pointer and stop dragging & panning if active
@@ -750,6 +756,39 @@ function getCenter(p1, p2) {
     x: (p1.clientX + p2.clientX) / 2,
     y: (p1.clientY + p2.clientY) / 2
   };
+}
+
+//make objects outside viewport invisible
+function clipObjects() {
+  //get world coords for viewport
+  const topLeftWorld = screenToWorld(0, 0);
+  const bottomRightWorld = screenToWorld(window.innerWidth, window.innerHeight);
+
+  const viewRect = {
+    left: topLeftWorld.x,
+    top: topLeftWorld.y,
+    right: bottomRightWorld.x,
+    bottom: bottomRightWorld.y
+  };
+
+  //run through notes, setting the visibility for each
+  nodesLayer.querySelectorAll('.note').forEach(note => {
+    //size and position of note
+    const nx = parseFloat(note.style.left) || 0;
+    const ny = parseFloat(note.style.top) || 0;
+    const nw = note.offsetWidth;
+    const nh = note.offsetHeight;
+
+    //check if any part of it is inside
+    const isVisible = !(
+      nx + nw < viewRect.left ||
+      nx > viewRect.right ||
+      ny + nh < viewRect.top ||
+      ny > viewRect.bottom
+    );
+
+    note.style.display = isVisible ? 'flex' : 'none';
+  });
 }
 
 //initialize
